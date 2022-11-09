@@ -1,7 +1,5 @@
-using JetBrains.Annotations;
-using System;
-using System.Collections;
 using System.Collections.Generic;
+using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -169,24 +167,18 @@ public class FieldGenerator : MonoBehaviour
         }
         if(isground)
         {
-            if(coordy+1<y)
+            cube.type = CUBE_TYPE.Ground;
+            if (coordy+1<y)
             {
                 if (cubes[coordx, coordy + 1, coordz].type != CUBE_TYPE.Air)
                 {
                     cube.type = CUBE_TYPE.Bed;
-                    Addressables.InstantiateAsync(field.fieldBed, transform.position + cube.coord, Quaternion.identity, transform);
-                }
-                else
-                {
-                    cube.type = CUBE_TYPE.Ground;
-                    Addressables.InstantiateAsync(field.fieldBase[1], transform.position + cube.coord, Quaternion.identity, transform);
                 }
             }
-            else
-            {
-                cube.type = CUBE_TYPE.Ground;
-                Addressables.InstantiateAsync(field.fieldBase[1], transform.position + cube.coord, Quaternion.identity, transform);
-            }
+
+            //Addressables.InstantiateAsync(field.fieldBase[UnityEngine.Random.Range(0, field.fieldBase.Length)], transform.position + cube.coord, Quaternion.identity, transform);
+
+
         }
         else
         {
@@ -194,8 +186,12 @@ public class FieldGenerator : MonoBehaviour
         }
     }
 
-
-
-
-
+    internal void FieldInfoSet(FieldInfo info)
+    {
+        info.field = new Dictionary<CUBE_TYPE, AssetReference[]>();
+        foreach(var fieldCube in info.data)
+        {
+            info.field.Add(fieldCube.type, fieldCube.assets);
+        }
+    }
 }

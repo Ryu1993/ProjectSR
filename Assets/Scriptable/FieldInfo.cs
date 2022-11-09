@@ -3,12 +3,20 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-[CreateAssetMenu(menuName ="FieldInfo")]
+
+
+public struct FieldCube
+{
+    public CUBE_TYPE type;
+    public AssetReference[] assets;
+
+}
+
+[CreateAssetMenu(menuName = "FieldInfo")]
 public class FieldInfo : ScriptableObject
 {
-    public AssetReference fieldSuburb;
-    public AssetReference[] fieldBase;
-    public AssetReference[] fieldHill;
-    public AssetReference fieldBed;
+    public FieldCube[] data;
+    public Dictionary<CUBE_TYPE, AssetReference[]> field;
+
 
 }
