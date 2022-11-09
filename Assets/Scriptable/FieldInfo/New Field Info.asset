@@ -12,27 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eefab3064a0f74e4ba293153f2f96c32, type: 3}
   m_Name: New Field Info
   m_EditorClassIdentifier: 
-  fieldSuburb:
-    m_AssetGUID: ae3e4d73606788a408c6abb086325060
-    m_SubObjectName: 
-    m_SubObjectType: 
-    m_EditorAssetChanged: 0
-  fieldBase:
-  - m_AssetGUID: 1da58d22f1b2b734997e3a787bb1323b
-    m_SubObjectName: 
-    m_SubObjectType: 
-    m_EditorAssetChanged: 0
-  - m_AssetGUID: fbceb2ce3ae7ae64ba5311082c2e090a
-    m_SubObjectName: 
-    m_SubObjectType: 
-    m_EditorAssetChanged: 0
-  fieldHill:
-  - m_AssetGUID: b73a0ae4d802a7a4aaad9c652db3df0c
-    m_SubObjectName: 
-    m_SubObjectType: 
-    m_EditorAssetChanged: 0
-  fieldBed:
-    m_AssetGUID: f3b3083d70d7c924b83b58216d06cbaf
-    m_SubObjectName: 
-    m_SubObjectType: 
-    m_EditorAssetChanged: 0
+  cubeData:
+  - type: 2
+    label:
+      m_LabelString: GrassGround
+  - type: 4
+    label:
+      m_LabelString: GrassBed

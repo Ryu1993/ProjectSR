@@ -32,7 +32,8 @@ MonoBehaviour:
   - m_GUID: fbceb2ce3ae7ae64ba5311082c2e090a
     m_Address: Assets/Prefabs/Suburb.prefab
     m_ReadOnly: 0
-    m_SerializedLabels: []
+    m_SerializedLabels:
+    - GrassGround
   - m_GUID: ae3e4d73606788a408c6abb086325060
     m_Address: Assets/Prefabs/Ground.prefab
     m_ReadOnly: 0
@@ -40,7 +41,8 @@ MonoBehaviour:
   - m_GUID: f3b3083d70d7c924b83b58216d06cbaf
     m_Address: Assets/Prefabs/Bed.prefab
     m_ReadOnly: 0
-    m_SerializedLabels: []
+    m_SerializedLabels:
+    - GrassBed
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 5cfa9f7d18b001145b33578bc383e564, type: 2}
   m_SchemaSet:

@@ -3,43 +3,39 @@ using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using Random = UnityEngine.Random;
+using JetBrains.Annotations;
+
+public enum CUBE_TYPE { Air,Null,Ground,Hill,Bed,}
 
 
-
-public enum CUBE_TYPE { Ground, Air,Hill,Bed,Null }
-
+//구조체라 stack에 할당하지만 큐브 데이터가 커질수록 비어있는 Cube가 메모리 공간을 차지하고 있음.
+//Cube 존재 유무를 체크하는 type만 구조체로 할당하고 실제 사용되는 큐브 데이터는 클래스로 할당?
+//null로 존재하지 않는 Cube들만 힙에 CubeData 할당하고 null인 큐브는 참조값만 가지고 있게 하자 -> 좀 더 효율적으로 관리 가능할지도?
+//class로 선언시 enum을 통해 간단한 상태 체크 가능한 것들에도 힙에 할당됨. 나누는게 맞다
 public struct Cube
 {
-    public Vector3 coord;
     public CUBE_TYPE type;
-
-
-
-    public Cube(Vector3 _coord,CUBE_TYPE _type)
-    {
-        coord = _coord;
-        type = _type;
-
-    }
+    public CubeData data;
 }
+public class CubeData
+{
 
+}
 
 
 public class FieldGenerator : MonoBehaviour
 {
-    [SerializeField] private int x;
-    [SerializeField] private int y;
-    [SerializeField] private int z;
+    [SerializeField] private Vector3Int size;
     public FieldInfo field;
     public Cube[,,] cubes;
-    private Vector3[] check = new Vector3[]
+    private Vector3Int[] check = new Vector3Int[]
     {
-        new Vector3(0,0,1),
-        new Vector3(0,0,-1),
-        new Vector3(1,0,0),
-        new Vector3(-1,0,0),
+        new Vector3Int(0,0,1),
+        new Vector3Int(0,0,-1),
+        new Vector3Int(1,0,0),
+        new Vector3Int(-1,0,0),
     };
-
 
     public void Start()
     {
@@ -53,25 +49,27 @@ public class FieldGenerator : MonoBehaviour
 
     public void GenerateField(FieldInfo fieldInfo)
     {
-        cubes = new Cube[x, y, z];
+        fieldInfo.FieldSet();
+        cubes = new Cube[size.x, size.y, size.z];
         ForCube((x, y, z) =>
         {
-            CUBE_TYPE creatType = CUBE_TYPE.Air;
-            if (y == 0) creatType = CUBE_TYPE.Ground;
-            cubes[x, y, z] = new Cube(new Vector3(x, y, z), creatType);
+            if (y == 0)
+            {
+                cubes[x, y, z].type = CUBE_TYPE.Ground;
+            }
         }
         );
-        FloorCreate(out Vector3[] oneFloorFirst, (x * z) / 4, new Vector3(UnityEngine.Random.Range(0, x), 0, UnityEngine.Random.Range(0, z)));
-        FloorCreate(out Vector3[] oneFloorSecond, (x * z) / 4, new Vector3(UnityEngine.Random.Range(0, x), 0, UnityEngine.Random.Range(0, z)));
-        FloorCreate(out Vector3[] oneFloorThird, (x * z) / 4, new Vector3(UnityEngine.Random.Range(0, x), 0, UnityEngine.Random.Range(0, z)));
-        FloorCreate(out Vector3[] twoFloorFirst, oneFloorFirst.Length / 3, oneFloorFirst[UnityEngine.Random.Range(0, oneFloorFirst.Length)]);
-        FloorCreate(out Vector3[] twoFloorSecond, oneFloorSecond.Length / 3, oneFloorSecond[UnityEngine.Random.Range(0, oneFloorSecond.Length)]);
-        FloorCreate(out Vector3[] threeFloorFirst, twoFloorSecond.Length / 2, twoFloorSecond[UnityEngine.Random.Range(0, twoFloorSecond.Length)]);
+        FloorCreate(out Vector3Int[] oneFloorFirst, (size.x * size.z) / 4, new Vector3Int(Random.Range(0, size.x), 0,Random.Range(0, size.z)));
+        FloorCreate(out Vector3Int[] oneFloorSecond, (size.x * size.z) / 4, new Vector3Int(Random.Range(0, size.x), 0, Random.Range(0, size.z)));
+        FloorCreate(out Vector3Int[] oneFloorThird, (size.x * size.z) / 4, new Vector3Int(Random.Range(0, size.x), 0, Random.Range(0, size.z)));
+        FloorCreate(out Vector3Int[] twoFloorFirst, oneFloorFirst.Length / 4, oneFloorFirst[Random.Range(0, oneFloorFirst.Length)]);
+        FloorCreate(out Vector3Int[] twoFloorSecond, oneFloorSecond.Length / 4, oneFloorSecond[Random.Range(0, oneFloorSecond.Length)]);
+        FloorCreate(out Vector3Int[] threeFloorFirst, twoFloorSecond.Length / 4, twoFloorSecond[Random.Range(0, twoFloorSecond.Length)]);
         ForCube((x, y, z) =>
         {
             if (cubes[x, y, z].type != CUBE_TYPE.Air)
             {
-                CreateCube(ref cubes[x, y, z]);
+                SortingCube(ref cubes[x, y, z],new Vector3Int(x,y,z));
             }
         }
         );
@@ -80,11 +78,11 @@ public class FieldGenerator : MonoBehaviour
     //전체 cube배열 순환
     internal void ForCube(Action<int, int, int> action)
     {
-        for (int i = 0; i < x; i++)
+        for (int i = 0; i < size.x; i++)
         {
-            for (int j = 0; j < y; j++)
+            for (int j = 0; j < size.y; j++)
             {
-                for (int k = 0; k < z; k++)
+                for (int k = 0; k < size.z; k++)
                 {
                     action(i, j, k);
                 }
@@ -93,20 +91,24 @@ public class FieldGenerator : MonoBehaviour
     }
 
 
+
+
     //고저차 생성
-    internal void FloorCreate(out Vector3[] floor,int floorSize,Vector3 origin)
+    internal void FloorCreate(out Vector3Int[] floor,int floorSize,Vector3Int origin)
     {
-        floor = new Vector3[floorSize];
-        if(floorSize == 0) return;
+        floor = new Vector3Int[floorSize];
+        if(floorSize == 0)
+            return;
         floor[0] = origin;
         int creatCount = 1;
         while(creatCount <floor.Length)//지형 적합성 체크
         {
-            Vector3 center = floor[UnityEngine.Random.Range(0, creatCount)];
+            Vector3Int center = floor[Random.Range(0, creatCount)];
             Shuffle.Array(ref check);
             for (int j = 0; j < check.Length; j++)
             {
-                if (floor.Contains(center + check[j])) continue;
+                if (floor.Contains(center + check[j]))
+                    continue;
                 if (GroundCheck(center + check[j]))
                 {
                     floor[creatCount] = center + check[j];
@@ -117,32 +119,24 @@ public class FieldGenerator : MonoBehaviour
         }
         for(int i = 0; i < floor.Length; i++)
         {
-            floor[i] += new Vector3(0, 1, 0);
-            cubes[(int)floor[i].x, (int)floor[i].y, (int)floor[i].z].type = CUBE_TYPE.Ground;
+            floor[i].y += 1;
+            cubes[floor[i].x,floor[i].y,floor[i].z].type = CUBE_TYPE.Ground;
         }
     }
 
 
     //좌표로 그라운드 체크
-    public bool GroundCheck(Vector3 position)
+    public bool GroundCheck(Vector3Int position)
     {
-        int coordx = (int)position.x;
-        int coordy = (int)position.y;
-        int coordz = (int)position.z;
-        if (coordx<0||coordz<0||coordy<0||coordx>=x||coordz>=z||coordy>=y)
-        {
+        if (position.x<0||position.z<0||position.y<0|| position.x >= size.x ||position.z>= size.z ||position.y>= size.y)
             return false;
-        }
-        return cubes[(int)position.x, (int)position.y, (int)position.z].type != CUBE_TYPE.Air;
+        return cubes[position.x, position.y, position.z].type != CUBE_TYPE.Air;
     }
 
 
     //큐브 데이터 정리 및 실제 씬에 그려질 큐브 생성
-    internal void CreateCube(ref Cube cube)
+    internal void SortingCube(ref Cube cube,Vector3Int coord)
     {
-        int coordx = (int)cube.coord.x;
-        int coordy = (int)cube.coord.y;
-        int coordz = (int)cube.coord.z;
         bool isground = false;
         for(int i = -1;i<=1;i++)
         {
@@ -150,48 +144,34 @@ public class FieldGenerator : MonoBehaviour
             {
                 for(int k = -1;k<=1;k++)
                 {
-                    if (i == 0 & j == 0 & k == 0) continue;
-                    if (coordx + i < 0 || coordx + i >= x || coordz + k < 0 || coordz + k >= z || coordy + j < 0 || coordy + j >= y)
-                    {
+                    if (i == 0 & j == 0 & k == 0)
+                        continue;
+                    if (coord.y + j < 0)
+                        continue;
+                    if (coord.x + i < 0 || coord.x + i >= size.x || coord.z + k < 0 || coord.z + k >= size.z || coord.y + j >= size.y)
                         isground = true;
-                    }
-                    else
-                    {
-                        if (cubes[coordx+i, coordy + j, coordz + k].type==CUBE_TYPE.Air)
-                        {
-                            isground = true;
-                        }
-                    }
+                    else if (cubes[coord.x + i, coord.y + j, coord.z + k].type == CUBE_TYPE.Air)
+                        isground = true;
                 }
             }
         }
         if(isground)
         {
             cube.type = CUBE_TYPE.Ground;
-            if (coordy+1<y)
-            {
-                if (cubes[coordx, coordy + 1, coordz].type != CUBE_TYPE.Air)
-                {
+            if (coord.y+1< size.y)
+                if (cubes[coord.x, coord.y + 1, coord.z].type != CUBE_TYPE.Air)
                     cube.type = CUBE_TYPE.Bed;
-                }
-            }
-
-            //Addressables.InstantiateAsync(field.fieldBase[UnityEngine.Random.Range(0, field.fieldBase.Length)], transform.position + cube.coord, Quaternion.identity, transform);
-
-
+            CreateCube(ref cube, coord);
         }
         else
-        {
             cube.type = CUBE_TYPE.Null;
-        }
     }
 
-    internal void FieldInfoSet(FieldInfo info)
+    internal void CreateCube(ref Cube cube, Vector3Int coord)
     {
-        info.field = new Dictionary<CUBE_TYPE, AssetReference[]>();
-        foreach(var fieldCube in info.data)
-        {
-            info.field.Add(fieldCube.type, fieldCube.assets);
-        }
+        if (field.field.TryGetValue(cube.type, out AssetLabelReference target))
+            RandomAddressable.Instantiate(target, transform.position + coord, Quaternion.identity, transform);//
     }
+
+
 }
