@@ -345,7 +345,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09a76cec41fbe7547bf46845547c3133, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  x: 10
-  y: 4
-  z: 10
+  x: 20
+  y: 5
+  z: 20
   field: {fileID: 11400000, guid: 4ce009d147bd03c40858f5a2e2f53a6d, type: 2}

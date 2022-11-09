@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: New Field Info
   m_EditorClassIdentifier: 
   fieldSuburb:
-    m_AssetGUID: fbceb2ce3ae7ae64ba5311082c2e090a
+    m_AssetGUID: ae3e4d73606788a408c6abb086325060
     m_SubObjectName: 
     m_SubObjectType: 
     m_EditorAssetChanged: 0
@@ -22,12 +22,17 @@ MonoBehaviour:
     m_SubObjectName: 
     m_SubObjectType: 
     m_EditorAssetChanged: 0
-  - m_AssetGUID: b9a1eaa8cb75a604db289d03577e3483
+  - m_AssetGUID: fbceb2ce3ae7ae64ba5311082c2e090a
     m_SubObjectName: 
     m_SubObjectType: 
     m_EditorAssetChanged: 0
   fieldHill:
   - m_AssetGUID: b73a0ae4d802a7a4aaad9c652db3df0c
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  fieldBed:
+    m_AssetGUID: f3b3083d70d7c924b83b58216d06cbaf
     m_SubObjectName: 
     m_SubObjectType: 
     m_EditorAssetChanged: 0

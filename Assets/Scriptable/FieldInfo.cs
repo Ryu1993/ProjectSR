@@ -9,5 +9,6 @@ public class FieldInfo : ScriptableObject
     public AssetReference fieldSuburb;
     public AssetReference[] fieldBase;
     public AssetReference[] fieldHill;
+    public AssetReference fieldBed;
 
 }
