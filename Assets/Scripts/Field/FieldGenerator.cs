@@ -51,20 +51,20 @@ public class FieldGenerator : MonoBehaviour
     {
         fieldInfo.FieldSet();
         cubes = new Cube[size.x, size.y, size.z];
+        List<Vector3Int> baseList = new List<Vector3Int>();
         ForCube((x, y, z) =>
         {
             if (y == 0)
             {
                 cubes[x, y, z].type = CUBE_TYPE.Ground;
+                baseList.Add(new Vector3Int(x, y, z));
             }
         }
         );
-        FloorCreate(out Vector3Int[] oneFloorFirst, (size.x * size.z) / 4, new Vector3Int(Random.Range(0, size.x), 0,Random.Range(0, size.z)));
-        FloorCreate(out Vector3Int[] oneFloorSecond, (size.x * size.z) / 4, new Vector3Int(Random.Range(0, size.x), 0, Random.Range(0, size.z)));
-        FloorCreate(out Vector3Int[] oneFloorThird, (size.x * size.z) / 4, new Vector3Int(Random.Range(0, size.x), 0, Random.Range(0, size.z)));
-        FloorCreate(out Vector3Int[] twoFloorFirst, oneFloorFirst.Length / 4, oneFloorFirst[Random.Range(0, oneFloorFirst.Length)]);
-        FloorCreate(out Vector3Int[] twoFloorSecond, oneFloorSecond.Length / 4, oneFloorSecond[Random.Range(0, oneFloorSecond.Length)]);
-        FloorCreate(out Vector3Int[] threeFloorFirst, twoFloorSecond.Length / 4, twoFloorSecond[Random.Range(0, twoFloorSecond.Length)]);
+        FloorCreate(FloorCreate(FloorCreate(baseList.ToArray())));
+        FloorCreate(FloorCreate(FloorCreate(baseList.ToArray())));
+        FloorCreate(FloorCreate(FloorCreate(baseList.ToArray())));
+        //FloorCreate(FloorCreate(baseList.ToArray()));
         ForCube((x, y, z) =>
         {
             if (cubes[x, y, z].type != CUBE_TYPE.Air)
@@ -94,12 +94,13 @@ public class FieldGenerator : MonoBehaviour
 
 
     //绊历瞒 积己
-    internal void FloorCreate(out Vector3Int[] floor,int floorSize,Vector3Int origin)
+    internal Vector3Int[] FloorCreate(Vector3Int[] baseFloor)
     {
-        floor = new Vector3Int[floorSize];
-        if(floorSize == 0)
-            return;
-        floor[0] = origin;
+        int floorSize = baseFloor.Length / 5;
+        if (floorSize == 0)
+            return null;
+        Vector3Int[] floor = new Vector3Int[floorSize];
+        floor[0] = baseFloor[Random.Range(0, baseFloor.Length)];
         int creatCount = 1;
         while(creatCount <floor.Length)//瘤屈 利钦己 眉农
         {
@@ -122,6 +123,7 @@ public class FieldGenerator : MonoBehaviour
             floor[i].y += 1;
             cubes[floor[i].x,floor[i].y,floor[i].z].type = CUBE_TYPE.Ground;
         }
+        return floor;
     }
 
 
