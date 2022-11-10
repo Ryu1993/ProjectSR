@@ -19,3 +19,6 @@ MonoBehaviour:
   - type: 4
     label:
       m_LabelString: GrassBed
+  - type: 5
+    label:
+      m_LabelString: Water
