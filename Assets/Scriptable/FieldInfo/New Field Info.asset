@@ -18,7 +18,11 @@ MonoBehaviour:
       m_LabelString: GrassGround
   - type: 4
     label:
-      m_LabelString: GrassBed
-  - type: 5
-    label:
       m_LabelString: Water
+  - type: 3
+    label:
+      m_LabelString: GrassBed
+  tree:
+    m_LabelString: Tree
+  stump:
+    m_LabelString: Stump

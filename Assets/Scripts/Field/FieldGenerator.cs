@@ -7,8 +7,9 @@ using Random = UnityEngine.Random;
 using JetBrains.Annotations;
 using System.Data;
 using Unity.VisualScripting;
+using System.Drawing;
 
-public enum CUBE_TYPE { Air,Null,Ground,Hill,Bed,Water,Error}
+public enum CUBE_TYPE { Air,Null,Ground,Bed,Water,Out,Obstacle}
 public enum DIRECTION
 {
     Down =0,Up =1,Left =2,Right =3,
@@ -20,9 +21,14 @@ public enum DIRECTION
 //class로 선언시 enum을 통해 간단한 상태 체크 가능한 것들에도 힙에 할당됨. 나누는게 맞다
 public struct Cube
 {
-
     public CUBE_TYPE type;
     public CubeData data;
+    public Cube(CUBE_TYPE type)
+    {
+        this.type = type;
+        data = null;
+    }
+
 }
 public class CubeData
 {
@@ -32,31 +38,52 @@ public class CubeData
 
 public class FieldGenerator : MonoBehaviour
 {
+    [SerializeField] private int riverCount;
+    [SerializeField] private int waterDepth;
     [SerializeField] private Vector3Int size;
+    [SerializeField,Range(0,1)] private float treeOffset;
+    [SerializeField,Range(0,1)] private float stumpOffset;
+
+
+    public List<Vector3Int> groundList = new List<Vector3Int>();
+    public List<Vector3Int> waterList = new List<Vector3Int>();
     public FieldInfo field;
     public Cube[,,] cubes;
-    public Cube outOfRange;
-    internal ref Cube Cubes(Vector3Int coord)
-    {
-        try
-        {
-            return ref cubes[coord.x, coord.y, coord.z];
-        }
-        catch(IndexOutOfRangeException)
-        {
-            outOfRange.type = CUBE_TYPE.Error;
-            return ref outOfRange;
-        }
-        
-    }
-
-    private Vector3Int[] check = new Vector3Int[]
+    public Cube outOfRange = new Cube(CUBE_TYPE.Out);
+    private Vector3Int[] side = new Vector3Int[]
     {
         new Vector3Int(0,0,1),
         new Vector3Int(0,0,-1),
         new Vector3Int(1,0,0),
         new Vector3Int(-1,0,0),
     };
+
+    internal void AllCube(Action<int,int,int> action)
+    {
+        for (int i = 0; i < size.x; i++)
+        {
+            for (int j = 0; j < size.y; j++)
+            {
+                for (int k = 0; k < size.z; k++)
+                {
+                    action(i, j, k);
+                }
+            }
+        }
+    }
+    internal ref Cube Cube(Vector3Int coord)
+    {
+        try
+        {
+            return ref cubes[coord.x, coord.y, coord.z];
+        }
+        catch (IndexOutOfRangeException)
+        {
+            return ref outOfRange;
+        }
+    }
+
+
 
     public void Start()
     {
@@ -72,88 +99,105 @@ public class FieldGenerator : MonoBehaviour
     {
         fieldInfo.FieldSet();
         cubes = new Cube[size.x, size.y, size.z];
-        List<Vector3Int> baseList = new List<Vector3Int>();
-        ForCube((x, y, z) =>
+        Vector3Int[] zeroFloor = new Vector3Int[size.x * size.z];
+        int count = 0;
+        for(int i =0; i<size.x;i++)
         {
-            if (y == 0)
+            for(int j = 0;j<size.z;j++)
             {
-                cubes[x, y, z].type = CUBE_TYPE.Ground;
-                baseList.Add(new Vector3Int(x, y, z));
+                cubes[i, 0, j].type = CUBE_TYPE.Bed;
+                zeroFloor[count] = new Vector3Int(i, 0, j);
+                count++;
             }
         }
-        );
-        Vector3Int[] baseFloor = baseList.ToArray();
-        
 
-        FloorCreate(FloorCreate(FloorCreate(baseFloor)));
-        FloorCreate(FloorCreate(FloorCreate(baseFloor)));
-        FloorCreate(FloorCreate(FloorCreate(baseFloor)));
+        FloorCreate(zeroFloor, size.y - 1, 5);
+        for(int i =0;i<riverCount;i++)
+            RiverCreate();
+        //while(true)
+        //{
+        //    foreach(var water in waterList)
+        //    {
+               
+        //    }
+        //}
 
 
-        baseList.Clear();
-        ForCube((x, y, z) =>
-        {
-            if (cubes[x, y, z].type != CUBE_TYPE.Air)
+        AllCube((x, y, z) => {
+            CUBE_TYPE cubeType = cubes[x, y, z].type;
+            if (cubes[x, y, z].type!= CUBE_TYPE.Air)
             {
-                GroundCube(ref cubes[x, y, z],new Vector3Int(x,y,z),baseList);
+                GroundCreate(x, y, z);
+                NullCreate(x, y, z);
+                CreateCube(new Vector3Int(x, y, z));
             }
-        }
-        );
+        });
 
-        WaterCube();
-        WaterCube();
-        WaterCube();
-        WaterCube();
-
-        ForCube((x, y, z) =>
+        for (int i = 0; i < groundList.Count*treeOffset; i++)
         {
-
-            if (cubes[x, y, z].type != CUBE_TYPE.Air)
-            {
-                CreateCube(ref cubes[x, y, z], new Vector3Int(x, y, z));
-            }
+            Vector3Int targetCoord = groundList[Random.Range(0,groundList.Count)];
+            targetCoord.y++;
+            if (Cube(targetCoord).type == CUBE_TYPE.Out) continue;
+            Cube(targetCoord).type = CUBE_TYPE.Obstacle;
+            RandomAddressable.Instantiate(field.tree, targetCoord, Quaternion.identity, transform);  
         }
-        );
+
+
+
 
     }
 
-    //전체 cube배열 순환
-    internal void ForCube(Action<int, int, int> action)
+
+    /// <summary>
+    /// 계단 지형 생성 메서드
+    /// </summary>
+    /// <param name="baseFloor">베이스 층 </param>
+    /// <param name="floorNum">최고 층수</param>
+    /// <param name="offset">지형 비율</param>
+    internal void FloorCreate(Vector3Int[] baseFloor,int floorNum,int offset)
     {
-        for (int i = 0; i < size.x; i++)
+        List<Vector3Int[]> curFloors = new List<Vector3Int[]>(floorNum);
+        for (int i = 0; i < floorNum; i++)
+            curFloors.Add(baseFloor);
+        for (int i = floorNum; i > 0; i--)
         {
-            for (int j = 0; j < size.y; j++)
+            List<Vector3Int[]> nextFloors = new List<Vector3Int[]>();
+            for (int j = 0; j < i; j++)
             {
-                for (int k = 0; k < size.z; k++)
+                int index = Random.Range(0, curFloors.Count);
+                Vector3Int[] prevFloor = curFloors[index];
+                if (FloorSet(prevFloor, out Vector3Int[] floor, offset))
                 {
-                    action(i, j, k);
+                    curFloors.RemoveAt(index);
+                    nextFloors.Add(floor);
                 }
             }
+            curFloors = nextFloors;
         }
     }
-
-
-
-    //고저차 생성
-    internal Vector3Int[] FloorCreate(Vector3Int[] baseFloor)
+  
+    internal bool FloorSet(Vector3Int[] baseFloor,out Vector3Int[] floor, int offset)
     {
-        int floorSize = baseFloor.Length / 5;
-        if (floorSize == 0)
-            return null;
-        Vector3Int[] floor = new Vector3Int[floorSize];
-        floor[0] = baseFloor[Random.Range(0, baseFloor.Length)];
         int creatCount = 1;
+        int floorSize = baseFloor.Length / offset;
+        if (floorSize == 0)
+        {
+            floor = null;
+            return false;
+        }
+        floor = new Vector3Int[floorSize];
+        floor[0] = baseFloor[Random.Range(0, baseFloor.Length)];
         while(creatCount <floor.Length)//지형 적합성 체크
         {
             Vector3Int center = floor[Random.Range(0, creatCount)];
-            Shuffle.Array(ref check);
-            for (int j = 0; j < check.Length; j++)
+            Shuffle.Array(ref side);
+            for (int j = 0; j < side.Length; j++)
             {
-                if (floor.Contains(center + check[j]))
+                if (floor.Contains(center + side[j]))
                     continue;
-                if (GroundCheck(center + check[j]))
+                if (Cube(center + side[j]).type == CUBE_TYPE.Bed)
                 {
-                    floor[creatCount] = center + check[j];
+                    floor[creatCount] = center + side[j];
                     creatCount++;
                     break;
                 }
@@ -162,129 +206,141 @@ public class FieldGenerator : MonoBehaviour
         for(int i = 0; i < floor.Length; i++)
         {
             floor[i].y += 1;
-            Cubes(floor[i]).type = CUBE_TYPE.Ground;
+            Cube(floor[i]).type = CUBE_TYPE.Bed;
         }
-        return floor;
+        return true;
+    }
+
+    /// <summary>
+    /// 다익스트라 기반 강 지형 생성 메서드
+    /// </summary>
+    internal void RiverCreate()
+    {
+        DIRECTION[] direction = Enum.GetValues(typeof(DIRECTION)) as DIRECTION[];
+        Shuffle.Array(ref direction);
+        Vector3Int beginPoint = SetPoint(direction[0]);
+        Vector3Int endPoint = SetPoint(direction[1]);
+        float distance = Vector3Int.Distance(beginPoint, endPoint);
+        while(true)
+        {
+            Vector3Int targetCoord = beginPoint;
+            for(int i =0; i<size.y;i++)
+            {
+                WaterCube(targetCoord, waterDepth);
+                targetCoord.y++;          
+            }
+            if (distance == 0) break;
+            distance = NextCoord(ref beginPoint, endPoint, distance);
+        }
     }
 
 
-    //좌표로 그라운드 체크
-    public bool GroundCheck(Vector3Int position)
+    /// <summary>
+    /// 출발,도착지점 랜덤 매칭
+    /// </summary>
+    internal Vector3Int SetPoint(DIRECTION direct)
     {
-        if (position.x<0|position.x >= size.x|
-            position.z<0|position.z >= size.z| 
-            position.y<0|position.y >= size.y )
+        switch(direct)
+        {
+            case DIRECTION.Down:
+                return new Vector3Int(Random.Range(0,size.x),0,0);
+            case DIRECTION.Up:   
+                return new Vector3Int(Random.Range(0, size.x),0, size.z-1);
+            case DIRECTION.Left: 
+                return new Vector3Int(0, 0,Random.Range(0, size.z));
+            case DIRECTION.Right:
+                return new Vector3Int(size.x-1, 0,Random.Range(0, size.z));
+            default:
+                return Vector3Int.zero;
+        }
+    }
+
+
+    internal float NextCoord(ref Vector3Int coord,Vector3Int endPoint,float minDistance)
+    {
+        Vector3Int nextCoord = coord;
+        Shuffle.Array(ref side);
+        foreach(var sideCheck in side)
+        {
+            float distance = Vector3Int.Distance(coord + sideCheck, endPoint);
+            if (minDistance>distance)
+            {
+                nextCoord = coord+sideCheck;
+                minDistance = distance;
+            }
+        }
+        coord = nextCoord;
+        return minDistance;
+    }
+
+    internal void WaterCube(Vector3Int coord,int depth)
+    {
+        if (Cube(coord).type == CUBE_TYPE.Air) return;
+        if(WaterSurfaceCheck(coord)>1 | coord.y>depth)
+        {
+            Cube(coord).type = CUBE_TYPE.Air;
+            return;
+        }
+        Cube(coord).type = CUBE_TYPE.Water;
+    }
+
+    //WaterCube의 표면 체크
+    internal int WaterSurfaceCheck(Vector3Int coord)
+    {
+        int surface = 0;
+        foreach(Vector3Int checkPoint in side)
+            if (Cube(coord + checkPoint).type == CUBE_TYPE.Air)
+                surface++;
+        return surface;
+    }
+    internal bool WaterCheck(Vector3Int coord)
+    {
+        if (WaterSurfaceCheck(coord) > 2)
+        {
+            Cube(coord).type = CUBE_TYPE.Air;
             return false;
-        return Cubes(position).type != CUBE_TYPE.Air;
+        }
+        return true;
+    }
+ 
+    internal void GroundCreate(int x, int y, int z)
+    {
+        if (cubes[x,y,z].type != CUBE_TYPE.Bed)
+            return;
+        CUBE_TYPE topCubeType = Cube(new Vector3Int(x, y + 1, z)).type;
+        if (topCubeType == CUBE_TYPE.Air | topCubeType == CUBE_TYPE.Out)
+        {
+            cubes[x, y, z].type = CUBE_TYPE.Ground;
+            groundList.Add(new Vector3Int(x, y, z));
+        }
+            
     }
 
-
-    //큐브 데이터 정리 및 실제 씬에 그려질 큐브 생성
-    internal void GroundCube(ref Cube cube,Vector3Int coord, List<Vector3Int> groundList)
+    /// <summary>
+    /// 유저가 볼 수 없는 위치에 있는 큐브는 제거
+    /// </summary>
+    internal void NullCreate(int x, int y, int z)
     {
-        bool isground = false;
-        for(int i = -1;i<=1;i++)
-        {
-            for(int j = -1;j<=1;j++)
-            {
-                for(int k = -1;k<=1;k++)
-                {
-                    if (i == 0 & j == 0 & k == 0)
-                        continue;
-                    if (coord.y + j < 0)
-                        continue;
-                    Vector3Int checkCoord = new Vector3Int(coord.x + i, coord.y + j, coord.z + k);
-                    if (checkCoord.x < 0 |
-                        checkCoord.z < 0 |
-                        checkCoord.x >= size.x|
-                        checkCoord.z >= size.z|
-                        checkCoord.y >= size.y)
-                        isground = true;
-                    else if (Cubes(checkCoord).type == CUBE_TYPE.Air)
-                        isground = true;
-                }
-            }
-        }
-        if(isground)
-        {
-            cube.type = CUBE_TYPE.Ground;
-            if (coord.y+1< size.y)
-                if (cubes[coord.x, coord.y + 1, coord.z].type != CUBE_TYPE.Air)
-                    cube.type = CUBE_TYPE.Bed;
-            if(cube.type == CUBE_TYPE.Ground)
-            {
-                groundList.Add(coord);
-            }
-        }
+        if (cubes[x, y, z].type == CUBE_TYPE.Ground) return;
         else
-            cube.type = CUBE_TYPE.Null;
-    }
-
-
-    internal void WaterCube()
-    {
-        Vector3Int origin = new Vector3Int();
-        int up = 0;
-        int right = 0;
-        switch(Random.Range(0,4)) // 시작지점과 방향 설정
         {
-            case (int)DIRECTION.Up:
-                origin.x = Random.Range(0, size.x);
-                up = 1;
-                break;
-            case (int)DIRECTION.Down:
-                origin.x = Random.Range(0, size.x);
-                origin.z = size.z - 1;
-                up = -1;
-                break;
-            case (int)DIRECTION.Left:
-                origin.z = Random.Range(0, size.z);
-                right = 1;
-                break;
-            case (int)DIRECTION.Right:
-                origin.z = Random.Range(0, size.z);
-                origin.x = size.x - 1;
-                right = -1;
-                break;
-        }
-        Vector3Int target = origin;
-
-        for(int i =0; i<size.y;i++)
-        {
-            target = origin;
-            target.y = i;
-            for (int j =0;j<size.x;j++)
+            for (int i = -1; i <= 1; i++)
             {
-                CUBE_TYPE cubetype = Cubes(target).type;
-                if (cubetype!=CUBE_TYPE.Air)
+                for (int j = -1; j <= 1; j++)
                 {
-                    CUBE_TYPE targetType;
-                    if (SideCheck(ref target, up == 0))
-                        targetType = CUBE_TYPE.Water;
-                    else
-                        targetType = CUBE_TYPE.Air;
-                    if (!WaterSideCheck(ref target))
-                        targetType = CUBE_TYPE.Air;
-                    Cubes(target).type = targetType;
+                    for (int k = -1; k <= 1; k++)
+                    {
+                        CUBE_TYPE checkType = Cube(new Vector3Int(x+i, y+j, z+k)).type;
+                        if (i == 0 & j == 0 & k == 0) continue;
+                        if (checkType == CUBE_TYPE.Air)
+                            return;
+                        if (checkType == CUBE_TYPE.Out & y + j >= 0)
+                            return;
+                    }
                 }
-                target.x += right;
-                target.z += up;
             }
         }
-    }
-
-
-    internal bool WaterSideCheck(ref Vector3Int origin)
-    {
-        int surfaceCount = 0;
-        for(int i = 0; i<check.Length;i++)
-        {
-            if (Cubes(origin + check[i]).type == CUBE_TYPE.Air)
-                surfaceCount++;
-        }
-        if (surfaceCount > 1)
-            return false;
-        return true;
+        cubes[x, y, z].type = CUBE_TYPE.Null;
     }
 
 
@@ -293,27 +349,9 @@ public class FieldGenerator : MonoBehaviour
 
 
 
-    internal bool SideCheck(ref Vector3Int origin,bool isRight)
+    internal void CreateCube(Vector3Int coord)
     {
-        CUBE_TYPE cubeType;
-        for (int i = -1; i <= 1; i++)
-        {
-            if (i == 0) continue;
-            if (isRight)
-                
-                cubeType = Cubes(new Vector3Int(origin.x, origin.y, origin.z + i)).type;
-            else
-                cubeType = Cubes(new Vector3Int(origin.x+i, origin.y, origin.z)).type;
-
-            if (cubeType == CUBE_TYPE.Air)
-                return false;
-        }
-        return true;
-    }
-
-
-    internal void CreateCube(ref Cube cube, Vector3Int coord)
-    {
+        Cube cube = Cube(coord);
         if (field.field.TryGetValue(cube.type, out AssetLabelReference target))
         {
             Vector3 point = transform.position + coord;
@@ -321,8 +359,6 @@ public class FieldGenerator : MonoBehaviour
                 point -= new Vector3(0, 0.3f, 0);
             RandomAddressable.Instantiate(target, point, Quaternion.identity, transform);//
         }
-
-
     }
 
 

@@ -48,6 +48,46 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels:
     - Water
+  - m_GUID: 33ff18b315dad7742802b978292cb254
+    m_Address: Assets/Prefabs/Tree/Tree_1 1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Tree
+  - m_GUID: d31512b419539ec46a25fdc74d18e88c
+    m_Address: Assets/Prefabs/Tree/Tree_2 1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Tree
+  - m_GUID: 1fc1f804439df8842a6950c162497fc3
+    m_Address: Assets/Prefabs/Tree/Tree_3 1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Tree
+  - m_GUID: 6080542ecab897f4daa5c4d6c11a4dd7
+    m_Address: Assets/Prefabs/Tree/Tree_4 1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Tree
+  - m_GUID: 97bc66b939b8a40418e2d39881ab4214
+    m_Address: Assets/Prefabs/Stump/Stump1 1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Stump
+  - m_GUID: cb28c7dcc17d2a04e94b50450c6abf2d
+    m_Address: Assets/Prefabs/Stump/Stump2 1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Stump
+  - m_GUID: beb71bf92a130fe4fbec51437708dc64
+    m_Address: Assets/Prefabs/Stump/Stump3 1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Stump
+  - m_GUID: a959a6218d4e0dd4887817b4d2bdaa7d
+    m_Address: Assets/Prefabs/Stump/Stump4 1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Stump
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 5cfa9f7d18b001145b33578bc383e564, type: 2}
   m_SchemaSet:

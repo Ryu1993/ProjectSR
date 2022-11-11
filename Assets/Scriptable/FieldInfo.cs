@@ -18,6 +18,8 @@ public class FieldInfo : ScriptableObject
 {
     public FieldCube[] cubeData;
     public Dictionary<CUBE_TYPE, AssetLabelReference> field;
+    public AssetLabelReference tree;
+    public AssetLabelReference stump;
 
     public void FieldSet()
     {

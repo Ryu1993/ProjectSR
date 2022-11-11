@@ -199,8 +199,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 101977900}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalRotation: {x: 0.21331409, y: 0.42085916, z: -0.1075258, w: 0.87510735}
+  m_LocalPosition: {x: -2.9, y: 6.73, z: -2.38}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -389,5 +389,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09a76cec41fbe7547bf46845547c3133, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  riverCount: 3
+  waterDepth: 1
   size: {x: 20, y: 5, z: 20}
+  treeOffset: 0.08
+  stumpOffset: 0.166
+  groundList: []
   field: {fileID: 11400000, guid: 4ce009d147bd03c40858f5a2e2f53a6d, type: 2}
