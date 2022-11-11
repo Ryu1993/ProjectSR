@@ -4,10 +4,9 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Random = UnityEngine.Random;
-using JetBrains.Annotations;
-using System.Data;
 using Unity.VisualScripting;
 using System.Drawing;
+
 
 public enum CUBE_TYPE { Air,Null,Ground,Bed,Water,Out,Obstacle}
 public enum DIRECTION
@@ -111,18 +110,14 @@ public class FieldGenerator : MonoBehaviour
             }
         }
 
+        ///////////////////////지형 데이터 생성//////////////////////
         FloorCreate(zeroFloor, size.y - 1, 5);
         for(int i =0;i<riverCount;i++)
             RiverCreate();
-        //while(true)
-        //{
-        //    foreach(var water in waterList)
-        //    {
-               
-        //    }
-        //}
+        WaterCheck();
+        ////////////////////////////////////////////////////////////
 
-
+        ///////////////////////지형 표면 깍아내기////////////////////
         AllCube((x, y, z) => {
             CUBE_TYPE cubeType = cubes[x, y, z].type;
             if (cubes[x, y, z].type!= CUBE_TYPE.Air)
@@ -132,21 +127,18 @@ public class FieldGenerator : MonoBehaviour
                 CreateCube(new Vector3Int(x, y, z));
             }
         });
+        GroundRefine();
+        ////////////////////////////////////////////////////////////
 
-        for (int i = 0; i < groundList.Count*treeOffset; i++)
-        {
-            Vector3Int targetCoord = groundList[Random.Range(0,groundList.Count)];
-            targetCoord.y++;
-            if (Cube(targetCoord).type == CUBE_TYPE.Out) continue;
-            Cube(targetCoord).type = CUBE_TYPE.Obstacle;
-            RandomAddressable.Instantiate(field.tree, targetCoord, Quaternion.identity, transform);  
-        }
-
+        TreeCreator();
 
 
 
     }
 
+
+
+    #region FloorCreator
 
     /// <summary>
     /// 계단 지형 생성 메서드
@@ -211,6 +203,9 @@ public class FieldGenerator : MonoBehaviour
         return true;
     }
 
+    #endregion
+
+    #region RiverCreator
     /// <summary>
     /// 다익스트라 기반 강 지형 생성 메서드
     /// </summary>
@@ -275,34 +270,37 @@ public class FieldGenerator : MonoBehaviour
 
     internal void WaterCube(Vector3Int coord,int depth)
     {
-        if (Cube(coord).type == CUBE_TYPE.Air) return;
-        if(WaterSurfaceCheck(coord)>1 | coord.y>depth)
+        if(SurfaceCheck(coord,CUBE_TYPE.Air)>1 | coord.y>depth)
         {
             Cube(coord).type = CUBE_TYPE.Air;
             return;
         }
         Cube(coord).type = CUBE_TYPE.Water;
+        waterList.Add(coord);
     }
 
-    //WaterCube의 표면 체크
-    internal int WaterSurfaceCheck(Vector3Int coord)
+
+    internal void WaterCheck()
     {
-        int surface = 0;
-        foreach(Vector3Int checkPoint in side)
-            if (Cube(coord + checkPoint).type == CUBE_TYPE.Air)
-                surface++;
-        return surface;
-    }
-    internal bool WaterCheck(Vector3Int coord)
-    {
-        if (WaterSurfaceCheck(coord) > 2)
+        foreach (var water in waterList)
         {
-            Cube(coord).type = CUBE_TYPE.Air;
-            return false;
+            foreach (var checkPoint in side)
+            {
+                if (Cube(water + checkPoint).type == CUBE_TYPE.Air)
+                    if (Cube(water + checkPoint + new Vector3Int(0, -1, 0)).type != CUBE_TYPE.Water)
+                        Cube(water + checkPoint).type = CUBE_TYPE.Ground;
+            }
         }
-        return true;
+        foreach (var water in waterList)
+        {
+            if(SurfaceCheck(water,CUBE_TYPE.Air)>1)
+                Cube(water).type = CUBE_TYPE.Air;
+        }
     }
- 
+
+    #endregion
+
+    #region GroundRefinement
     internal void GroundCreate(int x, int y, int z)
     {
         if (cubes[x,y,z].type != CUBE_TYPE.Bed)
@@ -315,6 +313,28 @@ public class FieldGenerator : MonoBehaviour
         }
             
     }
+
+    internal void GroundRefine()
+    {
+        while(true)
+        {
+            int refineCount = 0;
+            foreach (var ground in groundList)
+            {
+                Vector3Int checkPoint = ground + Vector3Int.up;
+                if (Cube(checkPoint).type == CUBE_TYPE.Out) continue;
+                if (SurfaceCheck(checkPoint, CUBE_TYPE.Ground) > 2)
+                {
+                    Cube(checkPoint).type = CUBE_TYPE.Ground;
+                    groundList.Add(checkPoint);
+                    refineCount++;
+                }
+            }
+            if (refineCount == 0)
+                break;
+        }
+    }
+
 
     /// <summary>
     /// 유저가 볼 수 없는 위치에 있는 큐브는 제거
@@ -343,11 +363,41 @@ public class FieldGenerator : MonoBehaviour
         cubes[x, y, z].type = CUBE_TYPE.Null;
     }
 
+    #endregion
+
+    #region ObstacleCreator
+    internal void TreeCreator()
+    {
+        for (int i = 0; i < groundList.Count * treeOffset; i++)
+        {
+            Vector3Int targetCoord = groundList[Random.Range(0, groundList.Count)];
+            targetCoord.y++;
+            if (Cube(targetCoord).type == CUBE_TYPE.Out) continue;
+            Cube(targetCoord).type = CUBE_TYPE.Obstacle;
+            RandomAddressable.Instantiate(field.tree, targetCoord, Quaternion.identity, transform);
+        }
+    }
 
 
 
+    #endregion
 
 
+
+    /// <summary>
+    /// 4방위 접촉면 체크
+    /// </summary>
+    /// <param name="coord">타겟 좌표</param>
+    /// <param name="type">검출하고 싶은 타입</param>
+    /// <returns></returns>
+    internal int SurfaceCheck(Vector3Int coord, CUBE_TYPE type)
+    {
+        int surface = 0;
+        foreach (Vector3Int checkPoint in side)
+            if (Cube(coord + checkPoint).type == type)
+                surface++;
+        return surface;
+    }
 
     internal void CreateCube(Vector3Int coord)
     {
