@@ -6,7 +6,7 @@ using UnityEngine.AddressableAssets;
 using Random = UnityEngine.Random;
 using Unity.VisualScripting;
 using System.Drawing;
-
+using JetBrains.Annotations;
 
 public enum CUBE_TYPE { Air,Null,Ground,Bed,Water,Out,Obstacle}
 public enum DIRECTION
@@ -70,7 +70,7 @@ public class FieldGenerator : MonoBehaviour
             }
         }
     }
-    internal ref Cube Cube(Vector3Int coord)
+    public ref Cube Cube(Vector3Int coord)
     {
         try
         {
@@ -124,10 +124,17 @@ public class FieldGenerator : MonoBehaviour
             {
                 GroundCreate(x, y, z);
                 NullCreate(x, y, z);
-                CreateCube(new Vector3Int(x, y, z));
             }
         });
+
         GroundRefine();
+
+        AllCube((x, y, z) => {
+            if (cubes[x, y, z].type != CUBE_TYPE.Air)
+                CreateCube(new Vector3Int(x, y, z));
+        });
+
+
         ////////////////////////////////////////////////////////////
 
         TreeCreator();
@@ -288,7 +295,7 @@ public class FieldGenerator : MonoBehaviour
             {
                 if (Cube(water + checkPoint).type == CUBE_TYPE.Air)
                     if (Cube(water + checkPoint + new Vector3Int(0, -1, 0)).type != CUBE_TYPE.Water)
-                        Cube(water + checkPoint).type = CUBE_TYPE.Ground;
+                        Cube(water + checkPoint).type = CUBE_TYPE.Bed;
             }
         }
         foreach (var water in waterList)
@@ -316,20 +323,32 @@ public class FieldGenerator : MonoBehaviour
 
     internal void GroundRefine()
     {
-        while(true)
+        var refinedGround = new List<Vector3Int>();
+        var bedGround = new List<Vector3Int>();
+        CUBE_TYPE[] types = new CUBE_TYPE[] { CUBE_TYPE.Ground, CUBE_TYPE.Bed, CUBE_TYPE.Out };
+        while (true)
         {
             int refineCount = 0;
             foreach (var ground in groundList)
             {
                 Vector3Int checkPoint = ground + Vector3Int.up;
                 if (Cube(checkPoint).type == CUBE_TYPE.Out) continue;
-                if (SurfaceCheck(checkPoint, CUBE_TYPE.Ground) > 2)
+                if (SurfaceCheck(checkPoint, types) > 2)
                 {
                     Cube(checkPoint).type = CUBE_TYPE.Ground;
-                    groundList.Add(checkPoint);
+                    Cube(ground).type = CUBE_TYPE.Bed;
+                    refinedGround.Add(checkPoint);
+                    bedGround.Add(ground);
                     refineCount++;
                 }
             }
+            for(int i =0; i< refineCount; i++)
+            {
+                groundList.Add(refinedGround[i]);
+                groundList.Remove(bedGround[i]);
+            }
+            refinedGround.Clear();
+            bedGround.Clear();
             if (refineCount == 0)
                 break;
         }
@@ -361,6 +380,7 @@ public class FieldGenerator : MonoBehaviour
             }
         }
         cubes[x, y, z].type = CUBE_TYPE.Null;
+
     }
 
     #endregion
@@ -374,7 +394,7 @@ public class FieldGenerator : MonoBehaviour
             targetCoord.y++;
             if (Cube(targetCoord).type == CUBE_TYPE.Out) continue;
             Cube(targetCoord).type = CUBE_TYPE.Obstacle;
-            RandomAddressable.Instantiate(field.tree, targetCoord, Quaternion.identity, transform);
+            RandomAddressable.Instantiate(field.tree, (Vector3)targetCoord+transform.position, Quaternion.identity, transform);
         }
     }
 
@@ -398,6 +418,18 @@ public class FieldGenerator : MonoBehaviour
                 surface++;
         return surface;
     }
+
+    internal int SurfaceCheck(Vector3Int coord, CUBE_TYPE[] types)
+    {
+        int surface = 0;
+        foreach (Vector3Int checkPoint in side)
+            foreach(var type in types)
+                if (Cube(coord + checkPoint).type == type)
+                    surface++;
+        return surface;
+    }
+
+
 
     internal void CreateCube(Vector3Int coord)
     {

@@ -79,6 +79,7 @@ public class ObjectPool
     public Transform Call(Quaternion rotate, Transform parent, bool worldPositonStay) => Call(Vector3.zero, rotate, parent, worldPositonStay, false);
     public Transform Call(Vector3 position) => Call(position, Quaternion.identity, null, false, true);
     public Transform Call(Vector3 position, Quaternion rotate) => Call(position, rotate, null, false, true);
+    public Transform Call(Vector3 position, Transform parent) => Call(position, Quaternion.identity, parent, true, true);
     public Transform Call(Vector3 position, Transform parent, bool worldPositonStay) => Call(position, Quaternion.identity, parent, worldPositonStay, true);
     public Transform Call(Vector3 position, Quaternion rotate, Transform parent, bool worldPositonStay) => Call(position, rotate, parent, worldPositonStay, true);
     ~ObjectPool()//GC가 수집할때 만약 baseObj가 어드레서블로 메모리에 로드시켰다면 같이 해제시키도록 함
