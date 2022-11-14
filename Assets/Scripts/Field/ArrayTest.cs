@@ -1,26 +1,26 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class ArrayTest : MonoBehaviour
 {
 
-
-    public struct TestArray
+    public int CompareY(Vector3Int x, Vector3Int y)
     {
-        public int num;
+        if (x.y < y.y) return -1;
+        if (x.y == y.y) return 0;
+        if (x.y > y.y) return 1;
+        return 0;
     }
+    Vector3Int[] testArray = new Vector3Int[3];
+    List<Vector3Int> testList = new List<Vector3Int>();
 
 
     private void Start()
     {
-        TestArray[] tests = new TestArray[10];
-        TestArray[] tests2 = tests;
-        tests[0].num = 2;
-
-        print(tests2[0].num);
-
-
+        
+        testList.Sort(CompareY);
 
 
 

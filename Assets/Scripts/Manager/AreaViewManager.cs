@@ -19,7 +19,7 @@ public class AreaViewManager : NonBehaviourSingleton<AreaViewManager>
         }
     }
 
-    public AreaView CallAreaView(Vector3 position,Transform transform)=> areaViewPool.Call(position,Quaternion.Euler(new Vector3(90,0,0))).GetComponent<AreaView>();
+    public AreaView CallAreaView(Vector3 position,Transform origin)=> areaViewPool.Call(position, Quaternion.Euler(new Vector3(90,0,0)),origin, true).GetComponent<AreaView>();
 
 
 

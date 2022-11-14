@@ -39,7 +39,7 @@ public class FieldGenerator : MonoBehaviour
 {
     [SerializeField] private int riverCount;
     [SerializeField] private int waterDepth;
-    [SerializeField] private Vector3Int size;
+    [SerializeField] public Vector3Int size;
     [SerializeField,Range(0,1)] private float treeOffset;
     [SerializeField,Range(0,1)] private float stumpOffset;
 

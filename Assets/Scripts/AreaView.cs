@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public enum TILE_TYPE { Default =0, Enable = 1, Disable = 2}
 
@@ -24,6 +25,8 @@ public class AreaView : MonoBehaviour,IPoolingable
     //    }
     //}
     private MeshFilter meshFilter;
+    public Transform player;
+    public TestPlayerMove playerMove;
 
     public ObjectPool home { get; set; }
 
@@ -42,19 +45,19 @@ public class AreaView : MonoBehaviour,IPoolingable
         meshFilter.mesh.SetColors(colors);
     }
 
-    public void Update()
+    public void Return()
     {
-        if(Input.GetKeyDown(KeyCode.Space))
-        {
-            SetColor(TILE_TYPE.Enable);
-        }
-        if(Input.GetKeyDown(KeyCode.Q))
-        {
-            SetColor(TILE_TYPE.Disable);
-        }
+        player = null;
+        home.Return(this.gameObject);
     }
 
+    public void Move()
+    {
+        playerMove.transform.position = transform.position + new Vector3(0,-0.1f, 0);
+        playerMove.MoveablePoint(playerMove.transform.position.ConvertInt());
+        playerMove.CreateAreaView();
 
+    }
 
 
 

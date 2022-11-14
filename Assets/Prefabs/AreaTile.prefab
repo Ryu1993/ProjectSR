@@ -12,7 +12,8 @@ GameObject:
   - component: {fileID: 5305948098419863635}
   - component: {fileID: 5305948098419863634}
   - component: {fileID: 4390807381913294753}
-  m_Layer: 0
+  - component: {fileID: 1296450766846914957}
+  m_Layer: 3
   m_Name: AreaTile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -100,3 +101,18 @@ MonoBehaviour:
   - {r: 0.3584905, g: 0.3584905, b: 0.3584905, a: 0.49019608}
   - {r: 0.117647044, g: 0.84568584, b: 0.99215686, a: 0.49019608}
   - {r: 1, g: 0, b: 0, a: 0.49019608}
+  player: {fileID: 0}
+--- !u!64 &1296450766846914957
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5305948098419863632}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
