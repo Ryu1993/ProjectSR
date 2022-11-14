@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-public enum TILE_TYPE { Default =0, Enable = 1, Disable = 2}
+public enum TILE_TYPE { Default =0, Enable = 1, Disable = 2,Selected = 3}
 
 
 [RequireComponent(typeof(MeshRenderer))]
@@ -27,6 +27,7 @@ public class AreaView : MonoBehaviour,IPoolingable
     private MeshFilter meshFilter;
     public Transform player;
     public TestPlayerMove playerMove;
+    public TILE_TYPE curType;
 
     public ObjectPool home { get; set; }
 
@@ -39,6 +40,7 @@ public class AreaView : MonoBehaviour,IPoolingable
 
     public void SetColor(TILE_TYPE type)
     {
+        curType = type;
         Color[] colors = new Color[meshFilter.mesh.vertexCount];
         for (int i = 0; i < colors.Length; i++)
             colors[i] = this.colors[(int)type];
@@ -53,9 +55,9 @@ public class AreaView : MonoBehaviour,IPoolingable
 
     public void Move()
     {
-        playerMove.transform.position = transform.position + new Vector3(0,-0.1f, 0);
-        playerMove.MoveablePoint(playerMove.transform.position.ConvertInt());
-        playerMove.CreateAreaView();
+        //playerMove.transform.position = transform.position + new Vector3(0,-0.1f, 0);
+        //playerMove.MoveablePoint(playerMove.transform.position.ConvertInt());
+        //playerMove.CreateAreaView();
 
     }
 
