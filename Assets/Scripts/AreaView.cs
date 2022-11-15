@@ -1,10 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using UnityEngine;
 using UnityEngine.Events;
+using Color = UnityEngine.Color;
 
-public enum TILE_TYPE { Default =0, Enable = 1, Disable = 2,Selected = 3}
+public enum TILE_TYPE { Default =0, Enable = 1, Disable = 2,Selected = 3,Passable = 4,Invisible =5}
 
 
 [RequireComponent(typeof(MeshRenderer))]
@@ -25,31 +27,46 @@ public class AreaView : MonoBehaviour,IPoolingable
     //    }
     //}
     private MeshFilter meshFilter;
+    private MeshRenderer meshRenderer;
     public Transform player;
-    public TestPlayerMove playerMove;
+    public PlayerMove playerMove;
     public TILE_TYPE curType;
+    public TILE_TYPE curState;
 
     public ObjectPool home { get; set; }
 
     private void Awake()
     {
         meshFilter = GetComponent<MeshFilter>();
-        SetColor(TILE_TYPE.Default);
+        meshRenderer = GetComponent<MeshRenderer>();
+
+    }
+    private void OnEnable()
+    {
+        SetColor(TILE_TYPE.Default, ref curType);
+        meshRenderer.enabled = true;
     }
 
-
-    public void SetColor(TILE_TYPE type)
+    public void Invisible()
     {
-        curType = type;
+        meshRenderer.enabled = false;
+
+    }
+
+    public void SetColor(TILE_TYPE type,ref TILE_TYPE cur)
+    {
+        cur = type;
         Color[] colors = new Color[meshFilter.mesh.vertexCount];
         for (int i = 0; i < colors.Length; i++)
             colors[i] = this.colors[(int)type];
         meshFilter.mesh.SetColors(colors);
     }
 
+
+
+
     public void Return()
     {
-        player = null;
         home.Return(this.gameObject);
     }
 

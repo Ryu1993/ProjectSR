@@ -97,7 +97,7 @@ public class FieldGenerator : MonoBehaviour
     public void GenerateField(FieldInfo fieldInfo)
     {
         fieldInfo.FieldSet();
-        cubes = new Cube[size.x, size.y, size.z];
+        cubes = new Cube[size.x, size.y+1, size.z];
         Vector3Int[] zeroFloor = new Vector3Int[size.x * size.z];
         int count = 0;
         for(int i =0; i<size.x;i++)
@@ -245,13 +245,13 @@ public class FieldGenerator : MonoBehaviour
         switch(direct)
         {
             case DIRECTION.Down:
-                return new Vector3Int(Random.Range(0,size.x),0,0);
+                return new Vector3Int(Random.Range(1,size.x-1),0,0);
             case DIRECTION.Up:   
-                return new Vector3Int(Random.Range(0, size.x),0, size.z-1);
+                return new Vector3Int(Random.Range(1, size.x-1),0, size.z-1);
             case DIRECTION.Left: 
-                return new Vector3Int(0, 0,Random.Range(0, size.z));
+                return new Vector3Int(0, 0,Random.Range(1, size.z-1));
             case DIRECTION.Right:
-                return new Vector3Int(size.x-1, 0,Random.Range(0, size.z));
+                return new Vector3Int(size.x-1, 0,Random.Range(1, size.z-1));
             default:
                 return Vector3Int.zero;
         }
