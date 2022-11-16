@@ -40,15 +40,15 @@ public class FieldGenerator : Singleton<FieldGenerator>
     [SerializeField] private int riverCount;
     [SerializeField] private int waterDepth;
     [SerializeField] public Vector3Int size;
-    [SerializeField,Range(0,1)] private float treeOffset;
-    [SerializeField,Range(0,1)] private float stumpOffset;
+    [SerializeField,Range(0,1)] private float treeOffSet;
+    [SerializeField,Range(0,1)] private float stumpOffSet;
+    [SerializeField, Range(0, 1)] private float floorOffSet;
 
-
-    public List<Vector3Int> groundList = new List<Vector3Int>();
-    public List<Vector3Int> waterList = new List<Vector3Int>();
+    [HideInInspector] public List<Vector3Int> groundList = new List<Vector3Int>();
+    [HideInInspector] public List<Vector3Int> waterList = new List<Vector3Int>();
+    [HideInInspector] public Cube[,,] cubes;
     public FieldInfo field;
-    public Cube[,,] cubes;
-    public Cube outOfRange = new Cube(CUBE_TYPE.Out);
+    private Cube outOfRange = new Cube(CUBE_TYPE.Out);
     private Vector3Int[] side = new Vector3Int[]
     {
         new Vector3Int(0,0,1),
@@ -111,7 +111,7 @@ public class FieldGenerator : Singleton<FieldGenerator>
         }
 
         ///////////////////////지형 데이터 생성//////////////////////
-        FloorCreate(zeroFloor, size.y - 1, 5);
+        FloorCreate(zeroFloor, size.y - 1, floorOffSet);
         for(int i =0;i<riverCount;i++)
             RiverCreate();
         WaterCheck();
@@ -153,7 +153,7 @@ public class FieldGenerator : Singleton<FieldGenerator>
     /// <param name="baseFloor">베이스 층 </param>
     /// <param name="floorNum">최고 층수</param>
     /// <param name="offset">지형 비율</param>
-    internal void FloorCreate(Vector3Int[] baseFloor,int floorNum,int offset)
+    internal void FloorCreate(Vector3Int[] baseFloor,int floorNum,float offset)
     {
         List<Vector3Int[]> curFloors = new List<Vector3Int[]>(floorNum);
         for (int i = 0; i < floorNum; i++)
@@ -174,11 +174,17 @@ public class FieldGenerator : Singleton<FieldGenerator>
             curFloors = nextFloors;
         }
     }
-  
-    internal bool FloorSet(Vector3Int[] baseFloor,out Vector3Int[] floor, int offset)
+
+
+
+
+
+
+
+    internal bool FloorSet(Vector3Int[] baseFloor,out Vector3Int[] floor, float offset)
     {
         int creatCount = 1;
-        int floorSize = baseFloor.Length / offset;
+        int floorSize =(int)((float)baseFloor.Length * offset);
         if (floorSize == 0)
         {
             floor = null;
@@ -388,7 +394,7 @@ public class FieldGenerator : Singleton<FieldGenerator>
     #region ObstacleCreator
     internal void TreeCreator()
     {
-        for (int i = 0; i < groundList.Count * treeOffset; i++)
+        for (int i = 0; i < groundList.Count * treeOffSet; i++)
         {
             Vector3Int targetCoord = groundList[Random.Range(0, groundList.Count)];
             targetCoord.y++;

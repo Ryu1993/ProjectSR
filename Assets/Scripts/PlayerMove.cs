@@ -10,10 +10,10 @@ public class PlayerMove : MonoBehaviour
     [SerializeField] private LayerMask mask;
     private List<AreaView> selectedList = new List<AreaView>();
     private List<AreaView> nextAreaList = new List<AreaView>(4);
-    private FieldGenerator field = FieldGenerator.Instance;
     private Vector3[] wayPoints = new Vector3[4];
     private Coroutine moveProgress;
     private AreaView[,] moveArea;
+    private FieldGenerator field;
     private int moveCount;
 
 
@@ -21,6 +21,11 @@ public class PlayerMove : MonoBehaviour
     public int movePoint;
     public int jumpHeight;
 
+
+    public void Awake()
+    {
+        field = FieldGenerator.Instance;
+    }
 
 
     public void Update()
