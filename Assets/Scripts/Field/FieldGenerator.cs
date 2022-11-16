@@ -35,7 +35,7 @@ public class CubeData
 }
 
 
-public class FieldGenerator : MonoBehaviour
+public class FieldGenerator : Singleton<FieldGenerator>
 {
     [SerializeField] private int riverCount;
     [SerializeField] private int waterDepth;

@@ -7,30 +7,35 @@ using JetBrains.Annotations;
 
 public class PlayerMove : MonoBehaviour
 {
-    private AreaView[,] moveArea;
-    public FieldGenerator field;
-    public Transform player;
-    public int movePoint;
+    [SerializeField] private LayerMask mask;
     private List<AreaView> selectedList = new List<AreaView>();
     private List<AreaView> nextAreaList = new List<AreaView>(4);
+    private FieldGenerator field = FieldGenerator.Instance;
     private Vector3[] wayPoints = new Vector3[4];
+    private Coroutine moveProgress;
+    private AreaView[,] moveArea;
+    private int moveCount;
+
+
+    public Transform order;
+    public int movePoint;
     public int jumpHeight;
-    public LayerMask mask;
-    public int moveCount;
-    public Ease ease;
+
 
 
     public void Update()
     {
         if (Input.GetKeyDown(KeyCode.K))
         {
-            CreateMoveArea(player, movePoint);
-            ActiveMoveArea(moveArea[movePoint,movePoint], movePoint);
             moveCount = movePoint;
+            CreateMoveArea(order, movePoint);
+            ActiveMoveArea(moveArea[movePoint,movePoint], movePoint);
         }
-        MoveAreaSelect();
-
-
+        if(moveArea!=null)
+            MoveAreaSelect();
+        if (moveProgress == null)
+            MoveProgressing();
+            
     }
 
 
@@ -42,7 +47,6 @@ public class PlayerMove : MonoBehaviour
                 moveArea[i, j]?.Return();
                 moveArea[i, j] = null;
             }
-
     }
 
     public void InvisibleArea()
@@ -102,8 +106,7 @@ public class PlayerMove : MonoBehaviour
 
     public void ActiveMoveArea(AreaView origin, int movePoint)
     {
-        Vector3 position = origin.transform.localPosition;
-        position += new Vector3(movePoint, 0, movePoint);
+        Vector3 position = origin.transform.localPosition+ new Vector3(movePoint, 0, movePoint);
         CrossCheck(position, (target) => ActiveCheck(target, origin, ActiveMoveableCheck), AreaActivation);
     }
 
@@ -117,21 +120,34 @@ public class PlayerMove : MonoBehaviour
                     if (hit.transform.TryGetComponent(out AreaView view))
                         if (view.curState == TILE_TYPE.Enable)
                         {
+                            moveCount--;
                             view.SetColor(TILE_TYPE.Selected, ref view.curState);
                             selectedList.Add(view);
                             AreaDeActive();
-                            ActiveMoveArea(view, movePoint);
-                            moveCount--;
+                            if(moveCount!=0)
+                                ActiveMoveArea(view, movePoint);
                         }
             }
-            else
+        if(Input.GetMouseButtonDown(1))
+            if(selectedList.Count>1)
             {
-                StartCoroutine(Move());
+                moveCount++;
+                AreaView lastView = selectedList[selectedList.Count-1];
+                lastView.SetColor(lastView.curType, ref lastView.curState);
+                selectedList.Remove(lastView);
+                AreaDeActive();
+                ActiveMoveArea(selectedList[selectedList.Count - 1], movePoint);
             }
+    }
 
 
-
-
+    public void MoveProgressing()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+            if (selectedList[selectedList.Count - 1].curType == TILE_TYPE.Passable)
+                return;
+            else
+                moveProgress = StartCoroutine(Move());
     }
     public IEnumerator Move()
     {
@@ -170,7 +186,7 @@ public class PlayerMove : MonoBehaviour
             else if (isPass)
                 wayPoints[1] = (wayPoints[3] + wayPoints[0]) / 2 + new Vector3(0, 0.2f, 0);
             //////////////////////////////////////////////////////
-            ///
+
             ///////////////////이동방식 설정///////////////////////
             if (height!=0|isPass)
                 pathType = PathType.CatmullRom;
@@ -179,16 +195,17 @@ public class PlayerMove : MonoBehaviour
             //////////////////////////////////////////////////////
 
             ////////////이동(이동 완료시 prevPoint재설정////////////
-            player.transform.DOPath(wayPoints, 0.5f, pathType).OnComplete(() => { isComplete = true;isPass = false;prevPoint = wayPoints[3]; });
+            order.transform.DOPath(wayPoints, 0.5f, pathType).OnComplete(() => { isComplete = true;isPass = false;prevPoint = wayPoints[3]; });
             yield return moveDelay;
         }
         RemoveArea();
         selectedList.Clear();
 
 
-        CreateMoveArea(player, movePoint);
-        ActiveMoveArea(moveArea[movePoint, movePoint], movePoint);
         moveCount = movePoint;
+        CreateMoveArea(order, movePoint);
+        ActiveMoveArea(moveArea[movePoint, movePoint], movePoint);
+        moveProgress = null;
     }
 
 
@@ -208,21 +225,22 @@ public class PlayerMove : MonoBehaviour
     /// <param name="target">목표좌표</param>
     /// <param name="condition">조건</param>
     /// <param name="action">실행</param>
-    public void CrossCheck(Vector3 target, Func<Vector2Int,bool> condition,Action<Vector2Int> action)
+    public void CrossCheck(Vector3 target, Func<Vector2Int, bool> condition, Action<Vector2Int> action) => CustomCrossCheck(target, condition, action, 1);
+
+    public void CustomCrossCheck(Vector3 target, Func<Vector2Int, bool> condition, Action<Vector2Int> action,int range)
     {
         Vector2Int checkPoint = new Vector2Int((int)target.x, (int)target.z);
-        for (int i = -1; i <= 1; i++)
-            for (int j = -1; j <= 1; j++)
+        for (int i = -range; i <= range; i++)
+            for (int j = -range; j <= range; j++)
             {
                 if (i == 0 & j == 0) continue;
                 if (i != 0 & j != 0) continue;
                 if (condition.Invoke(checkPoint + new Vector2Int(i, j)))
                 {
                     action.Invoke(checkPoint + new Vector2Int(i, j));
-                }                      
+                }
             }
     }
-
 
     /// <summary>
     /// null체크,중복체크,높이체크 조건식 custom에 추가 조건식 추가
@@ -256,23 +274,20 @@ public class PlayerMove : MonoBehaviour
     public bool ActiveMoveableCheck(AreaView checkPoint)
     {
         bool passable = false;
-        switch (checkPoint.curType)
-        {
-            case TILE_TYPE.Default:
-                passable = true;
-                break;
-            case TILE_TYPE.Passable:
-                {
-                    CrossCheck(checkPoint.transform.localPosition+new Vector3(movePoint,0,movePoint), (target) => ActiveCheck(target, checkPoint,ActivePassableCheck), (temp) => passable = true);
-                    break;
-                }
-        }
-        return passable;
+        if (checkPoint.curType == TILE_TYPE.Default)
+            passable = true;
+        if(checkPoint.curType == TILE_TYPE.Passable)
+            if(moveCount>0)
+            {
+                AreaView zeroPoint = checkPoint;
+                Vector3 zeroPointPosition = checkPoint.transform.localPosition + new Vector3(movePoint, 0, movePoint);
+                CustomCrossCheck(zeroPointPosition, (checkTarget) => ActiveCheck(checkTarget, zeroPoint, ActivePassableCheck), (none) => passable = true,moveCount-1);
+            }        
+        return passable;               
     }
 
     public bool ActivePassableCheck(AreaView checkPoint)
     {
-        print(checkPoint.curType);
         if (checkPoint.curType == TILE_TYPE.Default)
             return true;
         return false;
