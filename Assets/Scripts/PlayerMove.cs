@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using JetBrains.Annotations;
 
 public class PlayerMove : MonoBehaviour
 {
@@ -12,6 +13,7 @@ public class PlayerMove : MonoBehaviour
     public int movePoint;
     private List<AreaView> selectedList = new List<AreaView>();
     private List<AreaView> nextAreaList = new List<AreaView>(4);
+    private Vector3[] wayPoints = new Vector3[4];
     public int jumpHeight;
     public LayerMask mask;
     public int moveCount;
@@ -53,6 +55,7 @@ public class PlayerMove : MonoBehaviour
 
     public void CreateMoveArea(Transform player,int movePoint)
     {
+        transform.position = player.position;
         Vector3Int playerPos = player.position.ConvertInt() - new Vector3Int(movePoint, 0, movePoint);
         moveArea = new AreaView[movePoint * 2 + 1, movePoint * 2 + 1];
         for(int i=0; i< movePoint * 2 + 1;i++)
@@ -134,34 +137,55 @@ public class PlayerMove : MonoBehaviour
     {
         AreaDeActive();
         bool isComplete = false;
-        //int passCount = 0;
-        WaitUntil wait = new WaitUntil(() => isComplete);
-        Vector3[] movePoints = new Vector3[selectedList.Count];
-        Vector3[] wayPoints = new Vector3[3];
-        for (int i = 0; i < movePoints.Length; i++)
-            movePoints[i] = selectedList[i].transform.position + new Vector3(0, 0.1f, 0);
+        bool isPass = false;
+        WaitUntil moveDelay = new WaitUntil(() => isComplete);
         InvisibleArea();
-        for (int i=1; i < movePoints.Length; i++)
+        Vector3 prevPoint = selectedList[0].transform.position;
+        PathType pathType = PathType.Linear;
+        for(int i=1;i<selectedList.Count;i++)
         {
             isComplete = false;
-            float height = movePoints[i-1].y - movePoints[i].y;//이동할 칸이랑 높낮이 차이가 날 경우
-            if(height!=0)
+            if (selectedList[i].curType == TILE_TYPE.Passable)
             {
-                wayPoints[0] = movePoints[i - 1];
-                wayPoints[1] = (movePoints[i - 1] + movePoints[i]) / 2 + new Vector3(0, height = height < 0 ? -height : height, 0);
-                wayPoints[2] = movePoints[i];
-                player.transform.DOPath(wayPoints,1,PathType.CatmullRom).SetEase(ease).OnComplete(() => isComplete = true);
+                isPass = true;
+                continue;
             }
-            //if (selectedList[i].curType == TILE_TYPE.Passable) // 수면 위를 지나갈경우
-            //{
 
-            //}
+            /////////////////////이동경로 초기화///////////////////
+            for(int j =0; j<wayPoints.Length;j++)
+                wayPoints[j] = selectedList[i].transform.position;
+            wayPoints[0] = prevPoint;
+            //////////////////////////////////////////////////////
+
+            /////////////////////이동경로 설정/////////////////////
+            float height = wayPoints[3].y - wayPoints[0].y;
+            if (height > 0)
+                wayPoints[1] = (wayPoints[3] + wayPoints[0]) / 2 + new Vector3(0, height / 2 + 0.5f, 0);
+            else if (height < 0)
+            {
+                Vector3 temp = wayPoints[3] - wayPoints[0];
+                wayPoints[1] = wayPoints[0] + new Vector3(temp.x = temp.x > 1 ? 0.5f : 0, 0, temp.z = temp.z > 1 ? 0.5f : 0);
+                wayPoints[2] = new Vector3(wayPoints[3].x, wayPoints[0].y - 0.3f, wayPoints[3].z);
+            }                
+            else if (isPass)
+                wayPoints[1] = (wayPoints[3] + wayPoints[0]) / 2 + new Vector3(0, 0.2f, 0);
+            //////////////////////////////////////////////////////
+            ///
+            ///////////////////이동방식 설정///////////////////////
+            if (height!=0|isPass)
+                pathType = PathType.CatmullRom;
             else
-                player.transform.DOMove(movePoints[i], 1).SetEase(ease).OnComplete(() => isComplete = true);
-            yield return wait;
+                pathType = PathType.Linear;
+            //////////////////////////////////////////////////////
+
+            ////////////이동(이동 완료시 prevPoint재설정////////////
+            player.transform.DOPath(wayPoints, 0.5f, pathType).OnComplete(() => { isComplete = true;isPass = false;prevPoint = wayPoints[3]; });
+            yield return moveDelay;
         }
         RemoveArea();
         selectedList.Clear();
+
+
         CreateMoveArea(player, movePoint);
         ActiveMoveArea(moveArea[movePoint, movePoint], movePoint);
         moveCount = movePoint;

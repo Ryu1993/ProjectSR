@@ -50,7 +50,7 @@ public class AreaView : MonoBehaviour,IPoolingable
     public void Invisible()
     {
         meshRenderer.enabled = false;
-
+        transform.position = transform.position + new Vector3(0, 0.1f, 0);
     }
 
     public void SetColor(TILE_TYPE type,ref TILE_TYPE cur)
@@ -78,6 +78,7 @@ public class AreaView : MonoBehaviour,IPoolingable
 
     }
 
+    
 
 
 }
