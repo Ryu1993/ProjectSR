@@ -5,7 +5,7 @@ using UnityEngine;
 
 
 
-
+[CreateAssetMenu(menuName ="Test")]
 public class AttackInfo : ScriptableObject
 {
     public bool closeAttack;

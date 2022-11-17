@@ -21,10 +21,17 @@ public class PlayerMove : MonoBehaviour
     public int movePoint;
     public int jumpHeight;
 
+    
+    private bool isComplete = false;
+    private bool isPass = false;
+    private WaitUntil moveDelay;
+    private float moveSpeed;
+
 
     public void Awake()
     {
         field = FieldGenerator.Instance;
+        moveDelay = new WaitUntil(() => isComplete);
     }
 
 
@@ -62,17 +69,61 @@ public class PlayerMove : MonoBehaviour
     }
 
 
+    Dictionary<Vector2Int, AreaView> moveField = new Dictionary<Vector2Int, AreaView>();
+    List<AreaView> activeArea = new List<AreaView>();
+    public void CreatMoveField(Transform player,int moveableRange)
+    {
+        Vector2Int playerPos = player.position.To2DInt();
+        AreaViewManager.Instance.CallAreaField(playerPos, moveableRange, moveField);
+        activeArea.Clear();
+
+        for(int i = -moveableRange; i<=moveableRange;i++)
+            for(int j =-moveableRange;j<=moveableRange;j++)
+            {
+                int x = i < 0 ? -i : i;
+                int z = j < 0 ? -j : j;
+                if (x + z > moveableRange)
+                    continue;
+                Vector2Int targetPos = playerPos + new Vector2Int(i, j);
+                switch(field.SurfaceState(targetPos))
+                {
+                    case CUBE_TYPE.Air:
+                        activeArea.Add(moveField[targetPos]);
+                        moveField[targetPos].SetType(TILE_TYPE.Active);
+                        break;
+
+                    case CUBE_TYPE.Water:
+                        activeArea.Add(moveField[targetPos]);
+                        moveField[targetPos].SetType(TILE_TYPE.Passable);
+                        break;
+
+                    default:
+                        moveField[targetPos].SetType(TILE_TYPE.Disable);
+                        break;
+                }
+
+            }
+
+
+
+
+    }
+
+
+
+
+
     public void CreateMoveArea(Transform player,int movePoint)
     {
         transform.position = player.position;
-        Vector3Int playerPos = player.position.ConvertInt() - new Vector3Int(movePoint, 0, movePoint);
+        Vector3Int playerPos = player.position.ToInt() - new Vector3Int(movePoint, 0, movePoint);
         moveArea = new AreaView[movePoint * 2 + 1, movePoint * 2 + 1];
         for(int i=0; i< movePoint * 2 + 1;i++)
             for (int j = 0; j < movePoint * 2 + 1; j++)
             {
                 if (i == movePoint & j == movePoint)
                 {
-                    moveArea[i, j] = AreaViewManager.Instance.CallAreaView(playerPos + new Vector3(i, 0.1f, j), transform);
+                    CheckMoveArea(playerPos + new Vector3Int(i, 0, j), out moveArea[i, j]);
                     moveArea[i, j].SetColor(TILE_TYPE.Selected, ref moveArea[i, j].curType);
                     selectedList.Add(moveArea[i, j]);
                     continue;
@@ -156,51 +207,61 @@ public class PlayerMove : MonoBehaviour
     }
     public IEnumerator Move()
     {
-        AreaDeActive();
-        bool isComplete = false;
-        bool isPass = false;
-        WaitUntil moveDelay = new WaitUntil(() => isComplete);
         InvisibleArea();
-        Vector3 prevPoint = selectedList[0].transform.position;
-        PathType pathType = PathType.Linear;
+        wayPoints[0] = selectedList[0].transform.position;
         for(int i=1;i<selectedList.Count;i++)
         {
-            isComplete = false;
             if (selectedList[i].curType == TILE_TYPE.Passable)
             {
                 isPass = true;
                 continue;
             }
 
-            /////////////////////이동경로 초기화///////////////////
-            for(int j =0; j<wayPoints.Length;j++)
+            /////////////////////이동 설정 초기화///////////////////
+            moveSpeed = 0.5f;
+            for (int j =1; j<wayPoints.Length;j++)
                 wayPoints[j] = selectedList[i].transform.position;
-            wayPoints[0] = prevPoint;
             //////////////////////////////////////////////////////
+
 
             /////////////////////이동경로 설정/////////////////////
             float height = wayPoints[3].y - wayPoints[0].y;
             if (height > 0)
+            {
                 wayPoints[1] = (wayPoints[3] + wayPoints[0]) / 2 + new Vector3(0, height / 2 + 0.5f, 0);
+                moveSpeed = 0.7f;
+            }                
             else if (height < 0)
             {
                 Vector3 temp = wayPoints[3] - wayPoints[0];
                 wayPoints[1] = wayPoints[0] + new Vector3(temp.x = temp.x > 1 ? 0.5f : 0, 0, temp.z = temp.z > 1 ? 0.5f : 0);
                 wayPoints[2] = new Vector3(wayPoints[3].x, wayPoints[0].y - 0.3f, wayPoints[3].z);
+                moveSpeed = 0.4f;
             }                
             else if (isPass)
+            {
                 wayPoints[1] = (wayPoints[3] + wayPoints[0]) / 2 + new Vector3(0, 0.2f, 0);
+                moveSpeed = 0.6f;
+            }
+ 
             //////////////////////////////////////////////////////
 
             ///////////////////이동방식 설정///////////////////////
-            if (height!=0|isPass)
+            PathType pathType;
+            if (height != 0 | isPass)
                 pathType = PathType.CatmullRom;
             else
                 pathType = PathType.Linear;
             //////////////////////////////////////////////////////
 
-            ////////////이동(이동 완료시 prevPoint재설정////////////
-            order.transform.DOPath(wayPoints, 0.5f, pathType).OnComplete(() => { isComplete = true;isPass = false;prevPoint = wayPoints[3]; });
+            ////////////////////////이동//////////////////////////
+            isComplete = false;
+            order.transform.DOPath(wayPoints, moveSpeed, pathType).SetEase(Ease.Linear).OnComplete(() => 
+            { 
+                isComplete = true;
+                isPass = false;
+                wayPoints[0] = wayPoints[3];
+            });
             yield return moveDelay;
         }
         RemoveArea();

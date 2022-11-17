@@ -4,4 +4,8 @@ using UnityEngine;
 using System.Linq;
 using JetBrains.Annotations;
 
+public class ArrayTest : MonoBehaviour
+{
 
+
+}

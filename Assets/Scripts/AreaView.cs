@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using Color = UnityEngine.Color;
 
-public enum TILE_TYPE { Default =0, Enable = 1, Disable = 2,Selected = 3,Passable = 4,Invisible =5}
+public enum TILE_TYPE { Default =0, Enable = 1, Disable = 2,Selected = 3,Passable = 4,Invisible =5,Active = 6}
 
 
 [RequireComponent(typeof(MeshRenderer))]
@@ -44,6 +44,7 @@ public class AreaView : MonoBehaviour,IPoolingable
     private void OnEnable()
     {
         SetColor(TILE_TYPE.Default, ref curType);
+        curState = TILE_TYPE.Default;
         meshRenderer.enabled = true;
     }
 
@@ -61,8 +62,8 @@ public class AreaView : MonoBehaviour,IPoolingable
             colors[i] = this.colors[(int)type];
         meshFilter.mesh.SetColors(colors);
     }
-
-
+    public void SetType(TILE_TYPE type) => SetColor(type,ref curType);
+    public void SetState(TILE_TYPE type) => SetColor(type, ref curState);
 
 
     public void Return()

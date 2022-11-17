@@ -44,6 +44,7 @@ public class FieldGenerator : Singleton<FieldGenerator>
     [SerializeField,Range(0,1)] private float stumpOffSet;
     [SerializeField, Range(0, 1)] private float floorOffSet;
 
+    [HideInInspector] public Dictionary<Vector2Int, int> surfaceList = new Dictionary<Vector2Int, int>();
     [HideInInspector] public List<Vector3Int> groundList = new List<Vector3Int>();
     [HideInInspector] public List<Vector3Int> waterList = new List<Vector3Int>();
     [HideInInspector] public Cube[,,] cubes;
@@ -83,16 +84,14 @@ public class FieldGenerator : Singleton<FieldGenerator>
     }
 
 
-
-    public void Start()
-    {
-        GenerateField();
-    }
-
-    public void GenerateField()
+    private void Awake()
     {
         GenerateField(field);
     }
+
+
+
+
 
     public void GenerateField(FieldInfo fieldInfo)
     {
@@ -118,28 +117,18 @@ public class FieldGenerator : Singleton<FieldGenerator>
         ////////////////////////////////////////////////////////////
 
         ///////////////////////지형 표면 깍아내기////////////////////
-        AllCube((x, y, z) => {
-            CUBE_TYPE cubeType = cubes[x, y, z].type;
-            if (cubes[x, y, z].type!= CUBE_TYPE.Air)
-            {
-                GroundCreate(x, y, z);
-                NullCreate(x, y, z);
-            }
-        });
+        AllCube((x, y, z) => GroundSet(x,y,z));
 
         GroundRefine();
 
-        AllCube((x, y, z) => {
-            if (cubes[x, y, z].type != CUBE_TYPE.Air)
-                CreateCube(new Vector3Int(x, y, z));
-        });
+        AllCube((x, y, z) =>CreateCube(x, y, z));
 
-
+        SurfaceListSet();
         ////////////////////////////////////////////////////////////
 
+
+        /////////////////////맵 환경 설정///////////////////////////
         TreeCreator();
-
-
 
     }
 
@@ -314,6 +303,16 @@ public class FieldGenerator : Singleton<FieldGenerator>
     #endregion
 
     #region GroundRefinement
+    internal void GroundSet(int x,int y, int z)
+    {
+        if (cubes[x, y, z].type != CUBE_TYPE.Air)
+        {
+            GroundCreate(x, y, z);
+            NullCreate(x, y, z);
+        }
+    }
+
+
     internal void GroundCreate(int x, int y, int z)
     {
         if (cubes[x,y,z].type != CUBE_TYPE.Bed)
@@ -323,8 +322,34 @@ public class FieldGenerator : Singleton<FieldGenerator>
         {
             cubes[x, y, z].type = CUBE_TYPE.Ground;
             groundList.Add(new Vector3Int(x, y, z));
+        }         
+    }
+
+    /// <summary>
+    /// 유저가 볼 수 없는 위치에 있는 큐브는 제거
+    /// </summary>
+    internal void NullCreate(int x, int y, int z)
+    {
+        if (cubes[x, y, z].type == CUBE_TYPE.Ground) return;
+        else
+        {
+            for (int i = -1; i <= 1; i++)
+            {
+                for (int j = -1; j <= 1; j++)
+                {
+                    for (int k = -1; k <= 1; k++)
+                    {
+                        CUBE_TYPE checkType = Cube(new Vector3Int(x + i, y + j, z + k)).type;
+                        if (i == 0 & j == 0 & k == 0) continue;
+                        if (checkType == CUBE_TYPE.Air)
+                            return;
+                        if (checkType == CUBE_TYPE.Out & y + j >= 0)
+                            return;
+                    }
+                }
+            }
         }
-            
+        cubes[x, y, z].type = CUBE_TYPE.Null;
     }
 
     internal void GroundRefine()
@@ -361,33 +386,7 @@ public class FieldGenerator : Singleton<FieldGenerator>
     }
 
 
-    /// <summary>
-    /// 유저가 볼 수 없는 위치에 있는 큐브는 제거
-    /// </summary>
-    internal void NullCreate(int x, int y, int z)
-    {
-        if (cubes[x, y, z].type == CUBE_TYPE.Ground) return;
-        else
-        {
-            for (int i = -1; i <= 1; i++)
-            {
-                for (int j = -1; j <= 1; j++)
-                {
-                    for (int k = -1; k <= 1; k++)
-                    {
-                        CUBE_TYPE checkType = Cube(new Vector3Int(x+i, y+j, z+k)).type;
-                        if (i == 0 & j == 0 & k == 0) continue;
-                        if (checkType == CUBE_TYPE.Air)
-                            return;
-                        if (checkType == CUBE_TYPE.Out & y + j >= 0)
-                            return;
-                    }
-                }
-            }
-        }
-        cubes[x, y, z].type = CUBE_TYPE.Null;
 
-    }
 
     #endregion
 
@@ -437,17 +436,53 @@ public class FieldGenerator : Singleton<FieldGenerator>
 
 
 
-    internal void CreateCube(Vector3Int coord)
+    internal void CreateCube(int x,int y,int z)
     {
+        Vector3Int coord = new Vector3Int(x, y, z);
         Cube cube = Cube(coord);
-        if (field.field.TryGetValue(cube.type, out AssetLabelReference target))
-        {
-            Vector3 point = transform.position + coord;
-            if (cube.type == CUBE_TYPE.Water)
-                point -= new Vector3(0, 0.3f, 0);
-            RandomAddressable.Instantiate(target, point, Quaternion.identity, transform);//
-        }
+        if(cube.type!=CUBE_TYPE.Air)
+            if (field.field.TryGetValue(cube.type, out AssetLabelReference target))
+            {
+                Vector3 point = transform.position + coord;
+                if (cube.type == CUBE_TYPE.Water)
+                    point -= new Vector3(0, 0.3f, 0);
+                RandomAddressable.Instantiate(target, point, Quaternion.identity, transform);//
+            }
     }
+
+    internal void SurfaceListSet()
+    {
+        for(int i=0; i<size.x;i++)
+            for(int j=0; j<size.z;j++)
+                for (int k = 0; k < size.y+1; k++)
+                    if (Cube(new Vector3Int(i, k, j)).type == CUBE_TYPE.Air)
+                    {
+                        surfaceList.Add(new Vector2Int(i, j), k);
+                        break;
+                    }
+    }
+    public bool Surface(Vector2Int key,out Vector3 coord)
+    {
+        coord = Vector3.zero;
+        if (surfaceList.TryGetValue(key, out int y))
+        {
+            coord = new Vector3(key.x, y, key.y);
+            return true;
+        }
+        return false;
+    }
+
+    public CUBE_TYPE SurfaceState(Vector2Int key)
+    {
+        if (Surface(key, out Vector3 coord))
+            if (Cube(coord.ToInt() + new Vector3Int(0, -1, 0)).type == CUBE_TYPE.Water)
+                return CUBE_TYPE.Water;
+            else
+                return Cube(coord.ToInt()).type;
+        return CUBE_TYPE.Out;
+    }
+
+ 
 
 
 }
