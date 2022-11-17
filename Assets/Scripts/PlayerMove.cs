@@ -11,8 +11,11 @@ public class PlayerMove : MonoBehaviour
     private List<AreaView> selectedList = new List<AreaView>();
     private List<AreaView> nextAreaList = new List<AreaView>(4);
     private Vector3[] wayPoints = new Vector3[4];
+    private Dictionary<Vector2Int, AreaView> moveField = new Dictionary<Vector2Int, AreaView>();
+    private List<AreaView> activeArea = new List<AreaView>();
+    private List<AreaView> removeArea = new List<AreaView>();
     private Coroutine moveProgress;
-    private AreaView[,] moveArea;
+
     private FieldGenerator field;
     private int moveCount;
 
@@ -40,42 +43,37 @@ public class PlayerMove : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.K))
         {
             moveCount = movePoint;
-            CreateMoveArea(order, movePoint);
-            ActiveMoveArea(moveArea[movePoint,movePoint], movePoint);
+            CreatMoveField(order, movePoint);
+            MoveableArea(moveField[order.position.To2DInt()]);
         }
-        if(moveArea!=null)
-            MoveAreaSelect();
+        MoveAreaSelect();
         if (moveProgress == null)
             MoveProgressing();
-            
+
+
     }
 
 
     public void RemoveArea()
     {
-        for (int i = 0; i < moveArea.GetLength(0); i++)
-            for (int j = 0; j < moveArea.GetLength(1); j++)
-            {
-                moveArea[i, j]?.Return();
-                moveArea[i, j] = null;
-            }
+
     }
 
     public void InvisibleArea()
     {
-        for (int i = 0; i < moveArea.GetLength(0); i++)
-            for (int j = 0; j < moveArea.GetLength(1); j++)
-                moveArea[i, j]?.Invisible();
+        foreach (KeyValuePair<Vector2Int, AreaView> view in moveField)
+            view.Value.Invisible();
     }
 
-
-    Dictionary<Vector2Int, AreaView> moveField = new Dictionary<Vector2Int, AreaView>();
-    List<AreaView> activeArea = new List<AreaView>();
-    public void CreatMoveField(Transform player,int moveableRange)
+    public void CreatMoveField(Transform order,int moveableRange)
     {
-        Vector2Int playerPos = player.position.To2DInt();
+        Vector2Int playerPos = order.position.To2DInt();
+        foreach (KeyValuePair<Vector2Int, AreaView> view in moveField)
+            view.Value.Return();
+
         AreaViewManager.Instance.CallAreaField(playerPos, moveableRange, moveField);
         activeArea.Clear();
+
 
         for(int i = -moveableRange; i<=moveableRange;i++)
             for(int j =-moveableRange;j<=moveableRange;j++)
@@ -83,7 +81,7 @@ public class PlayerMove : MonoBehaviour
                 int x = i < 0 ? -i : i;
                 int z = j < 0 ? -j : j;
                 if (x + z > moveableRange)
-                    continue;
+                    continue;                  
                 Vector2Int targetPos = playerPos + new Vector2Int(i, j);
                 switch(field.SurfaceState(targetPos))
                 {
@@ -96,75 +94,107 @@ public class PlayerMove : MonoBehaviour
                         activeArea.Add(moveField[targetPos]);
                         moveField[targetPos].SetType(TILE_TYPE.Passable);
                         break;
-
+                    case CUBE_TYPE.Out:
+                        break;
                     default:
                         moveField[targetPos].SetType(TILE_TYPE.Disable);
                         break;
                 }
+                if (i == 0 & j == 0)
+                    selectedList.Add(moveField[targetPos]);
+
+
 
             }
 
 
-
-
-    }
-
-
-
-
-
-    public void CreateMoveArea(Transform player,int movePoint)
-    {
-        transform.position = player.position;
-        Vector3Int playerPos = player.position.ToInt() - new Vector3Int(movePoint, 0, movePoint);
-        moveArea = new AreaView[movePoint * 2 + 1, movePoint * 2 + 1];
-        for(int i=0; i< movePoint * 2 + 1;i++)
-            for (int j = 0; j < movePoint * 2 + 1; j++)
-            {
-                if (i == movePoint & j == movePoint)
+        bool isFixed = true;
+        while(isFixed)
+        {
+            isFixed = false;
+            foreach (AreaView area in activeArea)
+                if (!CrossHeightCheck(area.transform.position.To2DInt(), jumpHeight))
                 {
-                    CheckMoveArea(playerPos + new Vector3Int(i, 0, j), out moveArea[i, j]);
-                    moveArea[i, j].SetColor(TILE_TYPE.Selected, ref moveArea[i, j].curType);
-                    selectedList.Add(moveArea[i, j]);
-                    continue;
+                    area.SetType(TILE_TYPE.Default);
+                    removeArea.Add(area);
+                    isFixed = true;
                 }
-                int x = movePoint - i < 0 ? -(movePoint - i) : movePoint - i;
-                int z = movePoint - j < 0 ? -(movePoint - j) : movePoint - j;
-                if (x + z > movePoint) continue;
-                CheckMoveArea(playerPos + new Vector3Int(i, 0, j),out moveArea[i,j]);
-            }
-    }
-
-    public void CheckMoveArea(Vector3Int target,out AreaView areaCoord)
-    {
-        areaCoord = null;
-        if(field.Cube(target).type == CUBE_TYPE.Out)
-        {
-            areaCoord = AreaViewManager.Instance.CallAreaView(target+new Vector3(0, 0.1f, 0), transform);
-            areaCoord.SetColor(TILE_TYPE.Disable, ref areaCoord.curType);
-            return;
+            foreach(AreaView area in removeArea)
+                activeArea.Remove(area);
+            removeArea.Clear();
         }
-        for (int i = 0; i < field.size.y+1; i++)
-        {
-            Vector3Int checkCoord = new Vector3Int(target.x, i, target.z);
-            CUBE_TYPE type = field.Cube(checkCoord).type;
-            if (type == CUBE_TYPE.Air | type == CUBE_TYPE.Obstacle|type == CUBE_TYPE.Out)
+
+
+
+        foreach (AreaView area in activeArea)
+            if(!CrossObstacleCheck(area.transform.position.To2DInt()))
             {
-                areaCoord = AreaViewManager.Instance.CallAreaView(checkCoord + new Vector3(0, 0.1f, 0), transform);
-                if (type == CUBE_TYPE.Obstacle)
-                    areaCoord.SetColor(TILE_TYPE.Disable,ref areaCoord.curType);
-                if (field.Cube(checkCoord - Vector3Int.up).type == CUBE_TYPE.Water)
-                    areaCoord.SetColor(TILE_TYPE.Passable,ref areaCoord.curType);
-                break;
+                area.SetType(TILE_TYPE.Default);
+                removeArea.Add(area);
             }
-        }
+        foreach (AreaView area in removeArea)
+            activeArea.Remove(area);
+        removeArea.Clear();
+
     }
 
-    public void ActiveMoveArea(AreaView origin, int movePoint)
+
+    public void CrossCheck(Vector2Int origin, int range, Func<Vector2Int, bool> condition, Action<Vector2Int> trueAction)
     {
-        Vector3 position = origin.transform.localPosition+ new Vector3(movePoint, 0, movePoint);
-        CrossCheck(position, (target) => ActiveCheck(target, origin, ActiveMoveableCheck), AreaActivation);
+        CubeCheck.CustomCheck(CHECK_TYPE.CROSS,origin,range,condition, trueAction);
     }
+
+    public bool CrossHeightCheck(Vector2Int origin,int height)
+    {
+        bool result = false;
+        float originHeigt = 0;
+        int range = 1;
+        if (moveField.TryGetValue(origin, out AreaView originArea))
+            originHeigt = originArea.transform.position.y;
+        else
+            return false;
+
+        CrossCheck(origin, range,
+            //CheckFunc//
+            (checkPoint) =>
+            { 
+                if(moveField.TryGetValue(checkPoint,out AreaView checkArea))
+                {
+                    if(activeArea.Contains(checkArea))
+                    {
+                        float heightDistance = originHeigt - checkArea.transform.position.y;
+                        if (heightDistance >= -height & heightDistance <= height)
+                            return true;
+                    }
+                }
+                return false;
+            },
+            //ActiveFunc//
+            (none) => { result = true; }
+            );
+
+        return result;
+    }
+
+    public bool CrossObstacleCheck(Vector2Int origin)
+    {
+        bool result = false;
+
+        CrossCheck(origin,1,
+            (checkPoint)=>
+            {
+                if (moveField.TryGetValue(checkPoint, out AreaView checkArea))
+                    if (activeArea.Contains(checkArea))
+                        return true;
+                return false;
+            },
+            (none) => { result = true; }
+            );
+
+
+        return result;
+    }
+
 
 
     public void MoveAreaSelect()
@@ -177,11 +207,11 @@ public class PlayerMove : MonoBehaviour
                         if (view.curState == TILE_TYPE.Enable)
                         {
                             moveCount--;
-                            view.SetColor(TILE_TYPE.Selected, ref view.curState);
+                            view.SetState(TILE_TYPE.Selected);
                             selectedList.Add(view);
                             AreaDeActive();
                             if(moveCount!=0)
-                                ActiveMoveArea(view, movePoint);
+                                MoveableArea(view);
                         }
             }
         if(Input.GetMouseButtonDown(1))
@@ -189,12 +219,13 @@ public class PlayerMove : MonoBehaviour
             {
                 moveCount++;
                 AreaView lastView = selectedList[selectedList.Count-1];
-                lastView.SetColor(lastView.curType, ref lastView.curState);
+                lastView.SetState(lastView.curType);
                 selectedList.Remove(lastView);
                 AreaDeActive();
-                ActiveMoveArea(selectedList[selectedList.Count - 1], movePoint);
+                MoveableArea(selectedList[selectedList.Count - 1]);
             }
     }
+
 
 
     public void MoveProgressing()
@@ -205,6 +236,7 @@ public class PlayerMove : MonoBehaviour
             else
                 moveProgress = StartCoroutine(Move());
     }
+
     public IEnumerator Move()
     {
         InvisibleArea();
@@ -264,13 +296,11 @@ public class PlayerMove : MonoBehaviour
             });
             yield return moveDelay;
         }
-        RemoveArea();
         selectedList.Clear();
 
-
         moveCount = movePoint;
-        CreateMoveArea(order, movePoint);
-        ActiveMoveArea(moveArea[movePoint, movePoint], movePoint);
+        CreatMoveField(order,movePoint);
+        MoveableArea(moveField[order.position.To2DInt()]);
         moveProgress = null;
     }
 
@@ -285,93 +315,65 @@ public class PlayerMove : MonoBehaviour
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////
     #region ActiveMoveAreaPart
-    /// <summary>
-    /// 십자모양 체크
-    /// </summary>
-    /// <param name="target">목표좌표</param>
-    /// <param name="condition">조건</param>
-    /// <param name="action">실행</param>
-    public void CrossCheck(Vector3 target, Func<Vector2Int, bool> condition, Action<Vector2Int> action) => CustomCrossCheck(target, condition, action, 1);
 
-    public void CustomCrossCheck(Vector3 target, Func<Vector2Int, bool> condition, Action<Vector2Int> action,int range)
+    public void MoveableArea(AreaView origin)=> CrossCheck(origin.transform.position.To2DInt(),1,(target) => MoveableCheck(target, AreaTypeCheck), AreaActivation);
+    public bool MoveableCheck(Vector2Int target,Func<AreaView,bool> condition)
     {
-        Vector2Int checkPoint = new Vector2Int((int)target.x, (int)target.z);
-        for (int i = -range; i <= range; i++)
-            for (int j = -range; j <= range; j++)
-            {
-                if (i == 0 & j == 0) continue;
-                if (i != 0 & j != 0) continue;
-                if (condition.Invoke(checkPoint + new Vector2Int(i, j)))
-                {
-                    action.Invoke(checkPoint + new Vector2Int(i, j));
-                }
-            }
-    }
-
-    /// <summary>
-    /// null체크,중복체크,높이체크 조건식 custom에 추가 조건식 추가
-    /// </summary>
-    /// <param name="target"></param>
-    /// <param name="prev"></param>
-    /// <param name="custom">추가 조건식</param>
-    /// <returns></returns>
-    public bool ActiveCheck(Vector2Int target, AreaView prev,Func<AreaView,bool> custom)
-    {
-        try
+        if (moveField.TryGetValue(target, out AreaView checkPoint))
         {
-            AreaView checkPoint = moveArea[target.x, target.y];
-            if (checkPoint != null)
-                if (checkPoint != prev)
-                    if (!selectedList.Contains(checkPoint))
-                    {
-                        float height = prev.transform.localPosition.y - checkPoint.transform.localPosition.y;
-                        if (height >= -jumpHeight & height <= jumpHeight)
-                            return custom(checkPoint);
-                    }
+            if (!selectedList.Contains(checkPoint))
+                if (activeArea.Contains(checkPoint))
+                    if (CrossHeightCheck(target, jumpHeight))
+                        return condition(checkPoint);
+
             return false;
         }
-        catch (IndexOutOfRangeException)
-        {
+        else
             return false;
-        }
-
     }
 
-    public bool ActiveMoveableCheck(AreaView checkPoint)
+    public bool AreaTypeCheck(AreaView checkPoint)
     {
-        bool passable = false;
-        if (checkPoint.curType == TILE_TYPE.Default)
-            passable = true;
+        bool isMoveable = false;
+        if (checkPoint.curType == TILE_TYPE.Active)
+            isMoveable = true;
         if(checkPoint.curType == TILE_TYPE.Passable)
             if(moveCount>0)
-            {
-                AreaView zeroPoint = checkPoint;
-                Vector3 zeroPointPosition = checkPoint.transform.localPosition + new Vector3(movePoint, 0, movePoint);
-                CustomCrossCheck(zeroPointPosition, (checkTarget) => ActiveCheck(checkTarget, zeroPoint, ActivePassableCheck), (none) => passable = true,moveCount-1);
-            }        
-        return passable;               
+                CrossCheck(checkPoint.transform.position.To2DInt(), moveCount - 1, (origin) => PassableCheck(origin, checkPoint), (none) => isMoveable = true);
+        return isMoveable;             
     }
 
-    public bool ActivePassableCheck(AreaView checkPoint)
+    public bool PassableCheck(Vector2Int checkPoint,AreaView exception)
     {
-        if (checkPoint.curType == TILE_TYPE.Default)
-            return true;
+        if(moveField.TryGetValue(checkPoint,out AreaView view))
+        {
+            if (view != exception)
+                if (!selectedList.Contains(view))
+                    if (view.curType == TILE_TYPE.Active)
+                        return true;
+            print(view.curType);
+        }
         return false;
     }
 
 
+
+
+
+
+
     public void AreaActivation(Vector2Int target)
     {
-        AreaView activeArea = moveArea[target.x, target.y];
+        moveField.TryGetValue(target, out AreaView activeArea);
         nextAreaList.Add(activeArea);
-        activeArea.SetColor(TILE_TYPE.Enable, ref activeArea.curState);
+        activeArea.SetState(TILE_TYPE.Enable);
     }
 
     public void AreaDeActive()
     {
-        foreach(var area in nextAreaList)
-            if(area.curState!=TILE_TYPE.Selected)
-                area.SetColor(area.curType, ref area.curState);
+        foreach (var area in nextAreaList)
+            if (area.curState != TILE_TYPE.Selected)
+                area.SetState(area.curType);
         nextAreaList.Clear();
     }
 
