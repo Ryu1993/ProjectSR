@@ -40,6 +40,21 @@ public class AreaViewManager : NonBehaviourSingleton<AreaViewManager>
             }
     }
 
+    public void CallAreaField(Vector2Int origin, int range, List<AreaView> viewList)
+    {
+        viewList.Clear();
+        for (int i = -range; i <= range; i++)
+            for (int j = -range; j <= range; j++)
+            {
+                Vector2Int twoDimencionsCoord = origin + new Vector2Int(i, j);
+                if (field.Surface(twoDimencionsCoord, out Vector3 coord))
+                {
+                    coord.y += 0.1f;
+                    viewList.Add(areaViewPool.Call(coord, Quaternion.Euler(new Vector3(90, 0, 0))).GetComponent<AreaView>());
+                }
+            }
+    }
+
 
 
 

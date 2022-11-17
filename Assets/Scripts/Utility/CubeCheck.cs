@@ -33,6 +33,21 @@ public static class CubeCheck
                     trueAction.Invoke(checkPoint);
             }
     }
+    public static void DiagonalCheck(Vector2Int origin,int range, Func<Vector2Int, bool> condition, Action<Vector2Int> trueAction)
+    {
+        for (int i = -range; i <= range; i++)
+        {
+            if (i == 0) continue;
+            Vector2Int checkPoint = new Vector2Int(i, -i) + origin;
+            Vector2Int symmetryPoint = new Vector2Int(i,i)+ origin;
+            if (condition.Invoke(checkPoint))
+                trueAction.Invoke(checkPoint);
+            if (condition.Invoke(symmetryPoint))
+                trueAction.Invoke(symmetryPoint);
+        }
+
+    }
+
 
 
 }

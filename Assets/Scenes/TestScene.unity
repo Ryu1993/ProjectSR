@@ -223,7 +223,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &473967050
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -238,6 +238,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   attack: {fileID: 11400000, guid: b7da6e0fbf35bd34bbbd5439136db5aa, type: 2}
   test: {fileID: 840978765}
+  mask:
+    serializedVersion: 2
+    m_Bits: 8
 --- !u!4 &473967051
 Transform:
   m_ObjectHideFlags: 0

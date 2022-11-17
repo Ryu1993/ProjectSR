@@ -12,5 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4cbf2cec51dd4f3458780115a6fc7a2c, type: 3}
   m_Name: TestAttack
   m_EditorClassIdentifier: 
-  closeAttack: 0
-  selectRange: 6
+  selectRange: 4
+  attakcRange: 2
+  isTerrainIgnore: 0
+  isObstacleIgnore: 0
+  type: 2

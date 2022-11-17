@@ -12,20 +12,7 @@ public enum TILE_TYPE { Default =0, Enable = 1, Disable = 2,Selected = 3,Passabl
 [RequireComponent(typeof(MeshRenderer))]
 public class AreaView : MonoBehaviour,IPoolingable
 {
-    /// <summary>
-    /// 0=default,1=able,2=disable
-    /// </summary>
     [SerializeField] private Color[] colors;
-    //private Material _material;
-    //private Material material
-    //{
-    //    get
-    //    {
-    //        if(_material == null)
-    //            _material = GetComponent<MeshRenderer>().material;
-    //        return _material;
-    //    }
-    //}
     private MeshFilter meshFilter;
     private MeshRenderer meshRenderer;
     public Transform player;
@@ -46,6 +33,7 @@ public class AreaView : MonoBehaviour,IPoolingable
         SetColor(TILE_TYPE.Default, ref curType);
         curState = TILE_TYPE.Default;
         meshRenderer.enabled = true;
+        gameObject.layer = 3;
     }
 
     public void Invisible()
