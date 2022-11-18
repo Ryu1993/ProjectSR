@@ -78,7 +78,7 @@ public static class CubeCheck
         int end = 0;
         float addX = leftRight == Direction.Left ? -1 : leftRight == Direction.Right ? 1 : 0;
         float addY = topBottom == Direction.Top ? 1 : topBottom == Direction.Bottom ? -1 : 0;
-        float addZ = upDown == Direction.Up? 1 : upDown == Direction.Bottom ? -1 : 0;
+        float addZ = upDown == Direction.Up? 1 : upDown == Direction.Down ? -1 : 0;
         if(x==y&y==z)
         {
             end = (int)x;
