@@ -12,7 +12,7 @@ public class CharacterAttack : MonoBehaviour
     public AttackInfo attack;
 
     private Dictionary<Vector2Int, AreaView> selectRangeList = new Dictionary<Vector2Int, AreaView>();
-    private List<AreaView> attackRangeList = new List<AreaView>();
+    private Dictionary<Vector2Int, AreaView> attackRangeList = new Dictionary<Vector2Int, AreaView>();
     public Coroutine rangeViewProgress;
     public Transform test;
 
@@ -24,7 +24,9 @@ public class CharacterAttack : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.J))
         {
             AttackAreaCreate(test);
-            RangeAttackArea();
+            RangeAttackArea(transform.position.To2DInt(), attack.selectRange, selectRangeList, TILE_TYPE.Enable);
+            //CrossAttackArea(transform.position.To2DInt(), attack.selectRange, selectRangeList,TILE_TYPE.Enable);
+            //DiagonalAttackArea(transform.position.To2DInt(), attack.selectRange, selectRangeList, TILE_TYPE.Enable);
         }
         if(Input.GetKeyDown(KeyCode.H))
             if (selectRangeList.Count != 0)
@@ -53,24 +55,24 @@ public class CharacterAttack : MonoBehaviour
 
     }
 
-    public void CrossAttackArea(Vector2Int origin,int range)
+    public void CrossAttackArea(Vector2Int origin,int range,Dictionary<Vector2Int,AreaView> areaDic,TILE_TYPE type)
     {
         CubeCheck.CustomCheck(CHECK_TYPE.CROSS, origin, range,
-            (target) => selectRangeList.TryGetValue(target, out AreaView area), 
-            (target) => selectRangeList[target].SetType(TILE_TYPE.Enable));
+            (target) => areaDic.TryGetValue(target, out AreaView area), 
+            (target) => areaDic[target].SetType(type));
     }
 
-    public void DiagonalAttackArea(Vector2Int origin, int range)
+    public void DiagonalAttackArea(Vector2Int origin, int range, Dictionary<Vector2Int, AreaView> areaDic, TILE_TYPE type)
     {
         CubeCheck.DiagonalCheck(origin, range,
-            (target) => selectRangeList.TryGetValue(target, out AreaView area),
-            (target) => selectRangeList[target].SetType(TILE_TYPE.Enable));
+            (target) => areaDic.TryGetValue(target, out AreaView area),
+            (target) => areaDic[target].SetType(type));
     }
 
-    public void RangeAttackArea()
+    public void RangeAttackArea(Vector2Int origin, int range, Dictionary<Vector2Int, AreaView> areaDic,TILE_TYPE type)
     {
-        foreach (KeyValuePair<Vector2Int, AreaView> view in selectRangeList)
-            view.Value.SetType(TILE_TYPE.Enable);
+        foreach (KeyValuePair<Vector2Int, AreaView> view in areaDic)
+            view.Value.SetType(type);
     }
 
     
@@ -81,20 +83,23 @@ public class CharacterAttack : MonoBehaviour
         while(true)
         {
             if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit,Mathf.Infinity,mask))
-                if(hit.transform.TryGetComponent(out AreaView view))
-                {
-                    Vector2Int curPos = view.transform.position.To2DInt();
-                    if(prevPos!=curPos)
-                    {
-                        if (attackRangeList.Count != 0)
-                            RangeListClear();
-                        AreaViewManager.Instance.CallAreaField(curPos, attack.attakcRange, attackRangeList);
+            {
+                Vector2Int curPos = hit.transform.position.To2DInt();
+                if(selectRangeList.TryGetValue(curPos, out AreaView areaView))
+                    if (areaView.curType == TILE_TYPE.Enable)
+                        if (prevPos != curPos)
+                        {
+                            if (attackRangeList.Count != 0)
+                                RangeListClear();
+                            AreaViewManager.Instance.CallAreaField(curPos, attack.attakcRange, attackRangeList);
 
-                        RangeListSetColor(TILE_TYPE.Selected,curPos);
 
-                        prevPos = curPos;
-                    }
-                }
+                            RangeListSetColor(TILE_TYPE.Selected, curPos, RangeAttackArea);
+
+
+                            prevPos = curPos;
+                        }
+            }
             yield return null;
         }
     }
@@ -102,21 +107,15 @@ public class CharacterAttack : MonoBehaviour
 
     private void RangeListClear()
     {
-        foreach (AreaView view in attackRangeList)
-            view.Return();
+        foreach (KeyValuePair<Vector2Int, AreaView> view in attackRangeList)
+            view.Value.Return();
         attackRangeList.Clear();
     }
-    private void RangeListSetColor(TILE_TYPE type, Vector2Int origin)
+    private void RangeListSetColor(TILE_TYPE type, Vector2Int origin,Action<Vector2Int,int,Dictionary<Vector2Int,AreaView>,TILE_TYPE> action)
     {
-        foreach (AreaView view in attackRangeList)
-        {
-            view.transform.position += new Vector3(0, 0.1f, 0);
-            view.SetState(type);
-            if (view.transform.position.To2DInt() == origin)
-                view.SetState(TILE_TYPE.Disable);
-
-        }
-            
+        action.Invoke(origin,attack.attakcRange,attackRangeList,type);
+        attackRangeList.TryGetValue(origin, out AreaView areaView);
+        areaView.SetState(TILE_TYPE.Disable);        
     }
 
 
