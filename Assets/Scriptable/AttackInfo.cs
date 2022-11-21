@@ -1,9 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-
-public enum AttackType { Point,Straight, Range,Ignore}
+using UnityEngine.AddressableAssets;
 
 [CreateAssetMenu(menuName ="Test")]
 public class AttackInfo : ScriptableObject
@@ -15,7 +13,7 @@ public class AttackInfo : ScriptableObject
     public bool targetOnly;
     public CUBE_TYPE[] selectCubeMask;
     public CUBE_TYPE[] attackCubeMask;
-    public AttackType type;
-
+    public AssetReferenceT<AnimationClip> attackMotion;
+    public AssetReferenceT<GameObject> attackEffect;
 
 }

@@ -16,6 +16,7 @@ public class PlayerMove : MonoBehaviour
     private List<AreaView> removeArea = new List<AreaView>();
     private Coroutine moveProgress;
 
+
     private FieldGenerator field;
     private int moveCount;
 
@@ -237,6 +238,9 @@ public class PlayerMove : MonoBehaviour
                 moveProgress = StartCoroutine(Move());
     }
 
+
+
+
     public IEnumerator Move()
     {
         InvisibleArea();
@@ -288,6 +292,8 @@ public class PlayerMove : MonoBehaviour
 
             ////////////////////////ÀÌµ¿//////////////////////////
             isComplete = false;
+            if ((order.transform.forward+order.transform.position).To2DInt() != wayPoints[3].To2DInt())
+                yield return order.DOLookAt(new Vector3(wayPoints[3].x, order.transform.position.y, wayPoints[3].z), 0.3f).WaitForCompletion();
             order.transform.DOPath(wayPoints, moveSpeed, pathType).SetEase(Ease.Linear).OnComplete(() => 
             { 
                 isComplete = true;

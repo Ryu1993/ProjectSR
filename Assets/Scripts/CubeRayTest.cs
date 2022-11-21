@@ -16,7 +16,7 @@ public class CubeRayTest : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Y))
         {
-            CubeCheck.CubeRay(transform.position.ToInt(), target.transform.position.ToInt());
+            CubeCheck.CubeRayCast(transform.position.ToInt(), target.transform.position.ToInt());
             positions[0] = transform.position;
             positions[1] = target.position;
             line.SetPositions(positions);

@@ -57,19 +57,19 @@ public static class CubeCheck
     }
 
 
-    public static bool CubeRay(Vector3Int origin,Vector3Int target)
+    public static bool CubeRayCast(Vector3Int origin,Vector3Int target)
     {
-        return CubeRay(origin, target, (targetCoord) => field.Cube(targetCoord).type != CUBE_TYPE.Air);
+        return CubeRayCast(origin, target, (targetCoord) => field.Cube(targetCoord).type != CUBE_TYPE.Air);
     }
 
-    public static bool CubeRay(Vector3Int origin,Vector3Int target,CUBE_TYPE type)
+    public static bool CubeRayCast(Vector3Int origin,Vector3Int target,CUBE_TYPE type)
     {
-        return CubeRay(origin, target, (targetCoord) => field.Cube(targetCoord).type == type);
+        return CubeRayCast(origin, target, (targetCoord) => field.Cube(targetCoord).type == type);
     }
 
-    public static bool CubeRay(Vector3Int origin,Vector3Int target, CUBE_TYPE[] types)
+    public static bool CubeRayCast(Vector3Int origin,Vector3Int target, CUBE_TYPE[] types)
     {
-        return CubeRay(origin, target, (targetCoord) => 
+        return CubeRayCast(origin, target, (targetCoord) => 
         {
             foreach (var type in types)
             {
@@ -80,7 +80,57 @@ public static class CubeCheck
         });
     }
 
-    private static bool CubeRay(Vector3Int origin,Vector3Int target,Func<Vector3Int,bool> typecheck)
+    private static List<Vector3Int> cubeRayCastResult = new List<Vector3Int>();
+    public static List<Vector3Int> CubeRayCastAll(Vector3Int origin, Vector3Int target)
+    {
+        Func<Vector3Int, bool> typecheck= (checkCoord) => field.Cube(checkCoord).type != CUBE_TYPE.Air;
+        cubeRayCastResult.Clear();
+        Vector3 distance = target - origin;
+        float x = distance.x < 0 ? -distance.x : distance.x;
+        float y = distance.y < 0 ? -distance.y : distance.y;
+        float z = distance.z < 0 ? -distance.z : distance.z;
+        float addX = distance.x < 0 ? -1 : distance.x > 0 ? 1 : 0;
+        float addY = distance.y < 0 ? -1 : distance.y > 0 ? 1 : 0;
+        float addZ = distance.z < 0 ? -1 : distance.z > 0 ? 1 : 0;
+        float end = 0;
+        if (x == y & y == z)
+        {
+            end = x;
+        }
+        else if (x >= y & x >= z)
+        {
+            end = x;
+            addY = addY * y / x;
+            addZ = addZ * z / x;
+        }
+        else if (y >= x & y >= z)
+        {
+            end = y;
+            addX = addX * x / y;
+            addZ = addZ * z / y;
+        }
+        else if (z >= x & z >= y)
+        {
+            end = z;
+            addX = addX * x / z;
+            addY = addY * y / z;
+        }
+        for (float i = 0; i < end; i += 0.1f)
+        {
+            Vector3 check = new Vector3(addX, addY, addZ) * i;
+            Vector3Int targetCoord = origin + check.ToInt();
+            if (targetCoord == origin)
+                continue;
+            if (typecheck.Invoke(targetCoord))
+                if(!cubeRayCastResult.Contains(targetCoord))
+                {
+                    cubeRayCastResult.Add(targetCoord);
+                }            
+        }
+        return cubeRayCastResult;
+    }
+
+    private static bool CubeRayCast(Vector3Int origin,Vector3Int target,Func<Vector3Int,bool> typecheck)
     {
         Vector3 distance = target - origin;
         float x = distance.x < 0 ? -distance.x : distance.x;
