@@ -8,7 +8,7 @@ using Unity.VisualScripting;
 using System.Drawing;
 using JetBrains.Annotations;
 
-public enum CUBE_TYPE { Air,Null,Ground,Bed,Water,Out,Obstacle}
+public enum CUBE_TYPE { Air,Null,Ground,Bed,Water,Out,Obstacle,OnCharacter}
 public enum DIRECTION
 {
     Down =0,Up =1,Left =2,Right =3,
@@ -468,6 +468,17 @@ public class FieldGenerator : Singleton<FieldGenerator>
         }
         return false;
     }
+    public bool Surface(Vector2Int key, out Vector3Int coord)
+    {
+        coord = Vector3Int.zero;
+        if (surfaceList.TryGetValue(key, out int y))
+        {
+            coord = new Vector3Int(key.x, y, key.y);
+            return true;
+        }
+        return false;
+    }
+
 
     public CUBE_TYPE SurfaceState(Vector2Int key)
     {

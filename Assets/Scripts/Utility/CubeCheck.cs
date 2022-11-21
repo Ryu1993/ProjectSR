@@ -9,6 +9,10 @@ public enum CHECK_TYPE
 {
     BOTH, CROSS, SIDE
 }
+
+
+
+
 public static class CubeCheck
 {
     private static FieldGenerator field { get { return FieldGenerator.Instance; } }
@@ -53,64 +57,71 @@ public static class CubeCheck
     }
 
 
-    private static Vector2Int[] side = new Vector2Int[]
+    public static bool CubeRay(Vector3Int origin,Vector3Int target)
     {
-        new Vector2Int(0,1),
-        new Vector2Int(0,-1),
-        new Vector2Int(1,0),
-        new Vector2Int(-1,0)
-    };
-
-
-
-    public enum Direction { Middle,Top,Bottom,Up,Down,Left,Right}
+        return CubeRay(origin, target, (targetCoord) => field.Cube(targetCoord).type != CUBE_TYPE.Air);
+    }
 
     public static bool CubeRay(Vector3Int origin,Vector3Int target,CUBE_TYPE type)
     {
+        return CubeRay(origin, target, (targetCoord) => field.Cube(targetCoord).type == type);
+    }
+
+    public static bool CubeRay(Vector3Int origin,Vector3Int target, CUBE_TYPE[] types)
+    {
+        return CubeRay(origin, target, (targetCoord) => 
+        {
+            foreach (var type in types)
+            {
+                if (field.Cube(targetCoord).type == type)
+                    return true;
+            }
+            return false;
+        });
+    }
+
+    private static bool CubeRay(Vector3Int origin,Vector3Int target,Func<Vector3Int,bool> typecheck)
+    {
         Vector3 distance = target - origin;
-        Direction leftRight = distance.x < 0 ? Direction.Left : distance.x > 0 ? Direction.Right : Direction.Middle;
-        Direction upDown = distance.z < 0 ? Direction.Down : distance.z > 0 ? Direction.Up : Direction.Middle;
-        Direction topBottom = distance.y <0? Direction.Bottom : distance.y > 0 ? Direction.Top : Direction.Middle;
         float x = distance.x < 0 ? -distance.x : distance.x;
         float y = distance.y < 0 ? -distance.y : distance.y;
         float z = distance.z < 0 ? -distance.z : distance.z;
-
-        int end = 0;
-        float addX = leftRight == Direction.Left ? -1 : leftRight == Direction.Right ? 1 : 0;
-        float addY = topBottom == Direction.Top ? 1 : topBottom == Direction.Bottom ? -1 : 0;
-        float addZ = upDown == Direction.Up? 1 : upDown == Direction.Down ? -1 : 0;
-        if(x==y&y==z)
+        float addX = distance.x < 0 ? -1 : distance.x > 0 ? 1 : 0;
+        float addY = distance.y < 0 ? -1 : distance.y > 0 ? 1 : 0;
+        float addZ = distance.z < 0 ? -1 : distance.z > 0 ? 1 : 0;
+        float end = 0;
+        if (x==y&y==z)
         {
-            end = (int)x;
+            end = x;
         }
         else if(x>=y&x>=z)
         {
-            end = (int)x;
+            end = x;
             addY = addY * y / x;
             addZ = addZ * z / x;
         }
         else if(y>=x&y>=z)
         {
-            end = (int)y;
+            end = y;
             addX = addX* x / y;
             addZ = addZ * z / y;
         }
         else if(z>=x&z>=y)
         {
-            end = (int)z;
+            end = z;
             addX = addX* x / z;
             addY = addY * y / z;
         }
-        for(int i= 0; i<end;i++)
+        for(float i= 0; i<end;i+=0.1f)
         {
             Vector3 check = new Vector3(addX, addY, addZ) * i;
             Vector3Int targetCoord = origin + check.ToInt();
-            Debug.Log(targetCoord);
-            if (field.Cube(targetCoord).type == type)
+            if (targetCoord == origin)
+                continue;
+            if (typecheck.Invoke(targetCoord))
                 return true;
         }
         return false;
-
     }
 
 

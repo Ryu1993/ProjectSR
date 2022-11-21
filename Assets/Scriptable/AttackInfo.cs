@@ -10,8 +10,11 @@ public class AttackInfo : ScriptableObject
 {
     public int selectRange;
     public int attakcRange;
-    public bool isTerrainIgnore;
-    public bool isObstacleIgnore;
+    public bool selectHeightAllow;
+    public bool attakcHeightAllow;
+    public bool targetOnly;
+    public CUBE_TYPE[] selectCubeMask;
+    public CUBE_TYPE[] attackCubeMask;
     public AttackType type;
 
 
