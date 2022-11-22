@@ -81,7 +81,47 @@ public static class CubeCheck
     }
 
     private static List<Vector3Int> cubeRayCastResult = new List<Vector3Int>();
-    public static List<Vector3Int> CubeRayCastAll(Vector3Int origin, Vector3Int target)
+
+    public static ref List<Vector3Int> CubeRaySurface(Vector3 origin, Vector3 target)
+    {
+        Vector2Int origin2D = origin.To2DInt();
+        Vector2Int target2D = target.To2DInt();
+        cubeRayCastResult.Clear();
+        Vector2Int direction = target2D - origin2D;
+        float x = direction.x;
+        float y = direction.y;
+        float end = 0;
+        if (x < y)
+        {
+            end = y < 0 ? -y : y;
+            x = x / y;
+            y = y / y;
+        }
+        else
+        {
+            end = x < 0 ? -x : x;
+            x = x / x;
+            y = y / y;
+        }
+        for (float i = 0; i < end; i += 0.1f)
+        {
+            Vector2Int checkCoord = origin2D + new Vector2Int(Mathf.RoundToInt(x * i), Mathf.RoundToInt(y * i));
+            if (checkCoord == origin2D) continue;
+            if (checkCoord == target2D) continue;
+            if (field.Surface(checkCoord, out Vector3Int surface))
+            {
+                if (field.Cube(surface + Vector3Int.up).type == CUBE_TYPE.Obstacle)
+                    surface += Vector3Int.up;
+                if (!cubeRayCastResult.Contains(surface))
+                    cubeRayCastResult.Add(surface);
+            }
+        }
+        return ref cubeRayCastResult;
+    }
+
+
+
+    public static ref List<Vector3Int> CubeRayCastAll(Vector3Int origin, Vector3Int target)
     {
         Func<Vector3Int, bool> typecheck= (checkCoord) => field.Cube(checkCoord).type != CUBE_TYPE.Air;
         cubeRayCastResult.Clear();
@@ -127,7 +167,7 @@ public static class CubeCheck
                     cubeRayCastResult.Add(targetCoord);
                 }            
         }
-        return cubeRayCastResult;
+        return ref cubeRayCastResult;
     }
 
     private static bool CubeRayCast(Vector3Int origin,Vector3Int target,Func<Vector3Int,bool> typecheck)

@@ -40,7 +40,7 @@ public class CharacterAttack : MonoBehaviour
                 if (rangeViewProgress != null)
                 {
                     StopCoroutine(rangeViewProgress);
-                    RangeListClear();
+                    RangeListClear(attackRangeList);
                     rangeViewProgress = null;
                 }
                 else
@@ -140,38 +140,48 @@ public class CharacterAttack : MonoBehaviour
                         if (prevPos != curPos)
                         {
                             if (attackRangeList.Count != 0)
-                                RangeListClear();
+                                RangeListClear(attackRangeList);
+   
 
 
+                            character.transform.LookAt(new Vector3(curPos.x,character.transform.position.y,curPos.y));
                             AreaViewManager.Instance.CallAreaField(curPos, attack.attakcRange, attackRangeList);
                             AreaCut(AreaType.Attack, AreaShape.Cross, curPos);
                             attackRangeList.TryGetValue(curPos, out center);
                             center.SetState(TILE_TYPE.Disable);
  
-
                             prevPos = curPos;
                         }
             }
             if(Input.GetMouseButtonDown(0))
             {
-                PlayerMotionManager.Instance.attackMotions[attack].Play(character.animator, center.transform.position, () => print("공격"));
-                StopCoroutine(rangeViewProgress);
-                RangeListClear();
-                rangeViewProgress = null;
+                LoopDictionary(attackRangeList, (view) => view.Invisible());
+                RangeListClear(selectRangeList);
+                PlayerMotionManager.Instance.attackMotions[attack].Play(character.animator, center.transform.position, () => 
+                { 
+                    print("공격"); // 이부분 커스텀
+                    RangeListClear(attackRangeList);
+                    rangeViewProgress = null;
+                });
+                yield break;
             }
             yield return null;
         }
     }
 
 
-    private void RangeListClear()
+    private void LoopDictionary(Dictionary<Vector2Int, AreaView> target,Action<AreaView> action)
     {
-        foreach (KeyValuePair<Vector2Int, AreaView> view in attackRangeList)
-            view.Value.Return();
-        attackRangeList.Clear();
+        foreach (KeyValuePair<Vector2Int, AreaView> view in target)
+            action(view.Value);
     }
 
-
+    private void RangeListClear(Dictionary<Vector2Int, AreaView> target)
+    {
+        LoopDictionary(target, (view) => view.Return());
+        target.Clear();
+    }
+    
 
 
 }

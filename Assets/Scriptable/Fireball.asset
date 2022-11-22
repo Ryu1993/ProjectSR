@@ -17,7 +17,7 @@ MonoBehaviour:
   selectHeightAllow: 1
   attakcHeightAllow: 1
   targetOnly: 0
-  selectCubeMask: 
+  selectCubeMask: 06000000
   attackCubeMask: 
   attackMotion:
     m_AssetGUID: 316f89cc0d739e6469c2394ba1025b77
@@ -25,7 +25,7 @@ MonoBehaviour:
     m_SubObjectType: 
     m_EditorAssetChanged: 0
   attackEffect:
-    m_AssetGUID: 830ea99c8d507b54aa9a2020505d2f0f
+    m_AssetGUID: 34548ea2a38b3bd459a2704b25c62bd6
     m_SubObjectName: 
     m_SubObjectType: 
     m_EditorAssetChanged: 0

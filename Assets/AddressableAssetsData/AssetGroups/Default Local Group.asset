@@ -17,18 +17,6 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: ae97b3c68a9a1ba429ed377774cfe6fb
   m_SerializeEntries:
-  - m_GUID: 1da58d22f1b2b734997e3a787bb1323b
-    m_Address: Assets/Prefabs/Base.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-  - m_GUID: b73a0ae4d802a7a4aaad9c652db3df0c
-    m_Address: Assets/Prefabs/Hill.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-  - m_GUID: b9a1eaa8cb75a604db289d03577e3483
-    m_Address: Assets/Prefabs/Base2.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
   - m_GUID: fbceb2ce3ae7ae64ba5311082c2e090a
     m_Address: Assets/Prefabs/Suburb.prefab
     m_ReadOnly: 0
@@ -96,8 +84,8 @@ MonoBehaviour:
     m_Address: Assets/Download/Suriyun/Animations/Animations_v3/Shoot.anim
     m_ReadOnly: 0
     m_SerializedLabels: []
-  - m_GUID: 830ea99c8d507b54aa9a2020505d2f0f
-    m_Address: Assets/Prefabs/FX_Fireball_Shooting_Straight_Trail_01.prefab
+  - m_GUID: 34548ea2a38b3bd459a2704b25c62bd6
+    m_Address: Assets/Prefabs/Effect/FireBall.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
   m_ReadOnly: 0

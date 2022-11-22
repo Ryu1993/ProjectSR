@@ -20,7 +20,7 @@ public class PlayerMove : MonoBehaviour
     private FieldGenerator field;
     private int moveCount;
 
-
+    public Animator orderAnimator;
     public Transform order;
     public int movePoint;
     public int jumpHeight;
@@ -30,6 +30,7 @@ public class PlayerMove : MonoBehaviour
     private bool isPass = false;
     private WaitUntil moveDelay;
     private float moveSpeed;
+    private new int animation { get { return PlayerMotionManager.Instance.parameterAnimation; } }
 
 
     public void Awake()
@@ -68,6 +69,8 @@ public class PlayerMove : MonoBehaviour
 
     public void CreatMoveField(Transform order,int moveableRange)
     {
+        this.order = order;
+        order.TryGetComponent(out orderAnimator);
         Vector2Int playerPos = order.position.To2DInt();
         foreach (KeyValuePair<Vector2Int, AreaView> view in moveField)
             view.Value.Return();
@@ -290,10 +293,28 @@ public class PlayerMove : MonoBehaviour
                 pathType = PathType.Linear;
             //////////////////////////////////////////////////////
 
+
+
+
+
+
             ////////////////////////이동//////////////////////////
             isComplete = false;
             if ((order.transform.forward+order.transform.position).To2DInt() != wayPoints[3].To2DInt())
                 yield return order.DOLookAt(new Vector3(wayPoints[3].x, order.transform.position.y, wayPoints[3].z), 0.3f).WaitForCompletion();
+
+            //////////////////애니메이션 설정//////////////////////
+
+            if (isPass | height != 0)
+                orderAnimator.SetInteger(animation, 16);
+            else
+                orderAnimator.SetInteger(animation, 20);
+
+
+
+            //////////////////////////////////////////////////////
+
+
             order.transform.DOPath(wayPoints, moveSpeed, pathType).SetEase(Ease.Linear).OnComplete(() => 
             { 
                 isComplete = true;
@@ -303,6 +324,7 @@ public class PlayerMove : MonoBehaviour
             yield return moveDelay;
         }
         selectedList.Clear();
+        orderAnimator.SetInteger(animation, 0);
 
         moveCount = movePoint;
         CreatMoveField(order,movePoint);

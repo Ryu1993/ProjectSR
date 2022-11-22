@@ -1,3 +1,4 @@
+using DG.Tweening;
 using Sirenix.OdinInspector;
 using Sirenix.Serialization;
 using System;
@@ -11,8 +12,9 @@ using UnityEngine.UIElements;
 public class PlayerMotionManager : Singleton<PlayerMotionManager>
 {
     public Dictionary<AttackInfo,MotionPlayer> attackMotions = new Dictionary<AttackInfo,MotionPlayer>();
-    public readonly int parameterAttack = Animator.StringToHash("Attack");
+    public readonly int parameterAnimation = Animator.StringToHash("animation");
     public AnimatorOverrideController overrideController;
+    public Ease ease;
 
     private void Awake()
     {
@@ -33,10 +35,10 @@ public class PlayerMotionManager : Singleton<PlayerMotionManager>
                     MotionPlayer player = Activator.CreateInstance(Type.GetType(info.name)) as MotionPlayer;
                     if (player == null) continue;
                     info.attackMotion.LoadAssetAsync<AnimationClip>().Completed += 
-                        (handle) => { player.motionClip = handle.Result; callback.Invoke(); };
+                        (handle) => { player.motionClip = handle.Result; 
+                                      callback.Invoke(); };
                     info.attackEffect.InstantiateAsync(Vector3.zero, Quaternion.identity).Completed += 
-                        (handle) => { handle.Result.TryGetComponent(out ParticleSystem effect);
-                                      player.effectParticle = effect;
+                        (handle) => { player.effect = handle.Result;
                                       callback.Invoke(); };
                     attackMotions.Add(info, player);
                 }
