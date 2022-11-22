@@ -16,31 +16,7 @@ public class CubeRayTest : MonoBehaviour
     public LayerMask lmask;
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Y))
-        {
-            Vector3Int origin = transform.position.ToInt();
-            Vector3Int target = transform.forward.ToInt() * 10;
-
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            for(int i =0;i<1000;i++)
-            {
-                CubeCheck.CubeRayCast(origin,target);
-            }
-            sw.Stop();
-            print("cube : "+sw.ElapsedMilliseconds + "ms");
-
-            Stopwatch tsw = new Stopwatch();
-            sw.Start();
-            for(int i =0; i<1000;i++)
-            {
-                Physics.Raycast(transform.position, transform.forward, 10, lmask,QueryTriggerInteraction.Collide);
-            }
-            sw.Stop();
-            print("ray : " + tsw.ElapsedMilliseconds + "ms");
-
-        }
-            
+     
 
 
     }

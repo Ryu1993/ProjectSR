@@ -31,7 +31,13 @@ public struct Cube
 }
 public class CubeData
 {
+    public Character onChracter;
 
+    public CubeData() { }
+    public CubeData(Character onChracter)
+    {
+        this.onChracter = onChracter;
+    }
 }
 
 

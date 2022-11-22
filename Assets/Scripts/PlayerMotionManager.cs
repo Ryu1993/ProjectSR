@@ -4,21 +4,35 @@ using Sirenix.Serialization;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.UIElements;
 
 public class PlayerMotionManager : Singleton<PlayerMotionManager>
-{
-    public Dictionary<AttackInfo,MotionPlayer> attackMotions = new Dictionary<AttackInfo,MotionPlayer>();
-    public readonly int parameterAnimation = Animator.StringToHash("animation");
+{   
+    [HideInInspector]public readonly int parameterAnimation = Animator.StringToHash("animation");
+    public List<KeyValuePair<AnimationClip, AnimationClip>> controllerClips = new List<KeyValuePair<AnimationClip, AnimationClip>>();
+    public Dictionary<AttackInfo, MotionPlayer> attackMotions = new Dictionary<AttackInfo, MotionPlayer>();
     public AnimatorOverrideController overrideController;
-    public Ease ease;
+    public RuntimeAnimatorController originalController;
+    public AnimationClip originalAttack;
+    public int clipsIndex { get; private set; }
+
+
 
     private void Awake()
     {
         SetAttackMotion();
+        foreach(var clip in originalController.animationClips)
+            controllerClips.Add(new KeyValuePair<AnimationClip,AnimationClip>(clip, clip));
+        overrideController.ApplyOverrides(controllerClips);
+        for(int i=0; i<controllerClips.Count;i++)
+        {
+            if (controllerClips[i].Key == originalAttack)
+                clipsIndex = i;
+        }
     }
 
     public void SetAttackMotion()
@@ -35,7 +49,7 @@ public class PlayerMotionManager : Singleton<PlayerMotionManager>
                     MotionPlayer player = Activator.CreateInstance(Type.GetType(info.name)) as MotionPlayer;
                     if (player == null) continue;
                     info.attackMotion.LoadAssetAsync<AnimationClip>().Completed += 
-                        (handle) => { player.motionClip = handle.Result; 
+                        (handle) => { player.motionClip = handle.Result;
                                       callback.Invoke(); };
                     info.attackEffect.InstantiateAsync(Vector3.zero, Quaternion.identity).Completed += 
                         (handle) => { player.effect = handle.Result;

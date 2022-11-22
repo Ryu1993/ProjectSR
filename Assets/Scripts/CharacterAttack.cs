@@ -9,19 +9,22 @@ using UnityEngine;
 
 public enum AreaShape { Square,Cross, Diagonal}
 public enum AreaType { Select, Attack };
-public class CharacterAttack : MonoBehaviour
+public class CharacterAttack : MonoBehaviour,IInputEventable
 {
 
 
     private FieldGenerator field { get { return FieldGenerator.Instance; } }
 
-    public AttackInfo attack;
+    
 
     private Dictionary<Vector2Int, AreaView> selectRangeList = new Dictionary<Vector2Int, AreaView>();
     private Dictionary<Vector2Int, AreaView> attackRangeList = new Dictionary<Vector2Int, AreaView>();
     public Coroutine rangeViewProgress;
+
+
     public Transform order;
     public Character character;
+    public AttackInfo attack;
 
     private RaycastHit hit;
     [SerializeField] private LayerMask mask;
@@ -50,6 +53,16 @@ public class CharacterAttack : MonoBehaviour
             }
 
     }
+
+    public void InputStart()
+    {
+
+    }
+    public void InputBreak()
+    {
+
+    }
+
 
     public void AttackAreaCreate(Transform character)
     {

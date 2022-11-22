@@ -4,33 +4,38 @@ using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 using JetBrains.Annotations;
+using Sirenix.OdinInspector;
+using Unity.VisualScripting;
 
-public class PlayerMove : MonoBehaviour
+public class PlayerMove : MonoBehaviour,IInputEventable
 {
+    [SerializeField] private ConfirmUI confirmBox;
     [SerializeField] private LayerMask mask;
+    [BoxGroup("TargetInfo")] public Character character;
+    [BoxGroup("TargetInfo")] public Animator orderAnimator;
+    [BoxGroup("TargetInfo")] public Transform order;
+    [BoxGroup("TargetInfo")] public int movePoint;
+    [BoxGroup("TargetInfo")] public int jumpHeight;
+
+    private Dictionary<Vector2Int, AreaView> moveField = new Dictionary<Vector2Int, AreaView>();
     private List<AreaView> selectedList = new List<AreaView>();
     private List<AreaView> nextAreaList = new List<AreaView>(4);
-    private Vector3[] wayPoints = new Vector3[4];
-    private Dictionary<Vector2Int, AreaView> moveField = new Dictionary<Vector2Int, AreaView>();
     private List<AreaView> activeArea = new List<AreaView>();
     private List<AreaView> removeArea = new List<AreaView>();
-    private Coroutine moveProgress;
-
+    private Vector3[] wayPoints = new Vector3[4];
 
     private FieldGenerator field;
+
     private int moveCount;
-
-    public Animator orderAnimator;
-    public Transform order;
-    public int movePoint;
-    public int jumpHeight;
-
-    
     private bool isComplete = false;
     private bool isPass = false;
     private WaitUntil moveDelay;
     private float moveSpeed;
     private new int animation { get { return PlayerMotionManager.Instance.parameterAnimation; } }
+
+
+    private Coroutine selectArea;
+    private Coroutine moveProgress;
 
 
     public void Awake()
@@ -40,44 +45,46 @@ public class PlayerMove : MonoBehaviour
     }
 
 
-    public void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.K))
-        {
-            moveCount = movePoint;
-            CreatMoveField(order, movePoint);
-            MoveableArea(moveField[order.position.To2DInt()]);
-        }
-        MoveAreaSelect();
-        if (moveProgress == null)
-            MoveProgressing();
+    //public void Update()
+    //{
+    //    if (Input.GetKeyDown(KeyCode.K))
+    //    {
+            
+    //        CreatMoveField(order, movePoint);
+    //        MoveableArea(moveField[order.position.To2DInt()]);
+    //    }
+    //    MoveAreaSelect();
+    //    if (moveProgress == null)
+    //        MoveProgressing();
+    //}
 
+
+    public void InputStart()
+    {
+        CreatMoveField(order, movePoint);
+        MoveableArea(moveField[order.position.To2DInt()]);
+        selectArea = StartCoroutine(MoveAreaSelect());
+    }
+
+    public void InputBreak()
+    {
 
     }
 
 
-    public void RemoveArea()
-    {
-
-    }
-
-    public void InvisibleArea()
-    {
-        foreach (KeyValuePair<Vector2Int, AreaView> view in moveField)
-            view.Value.Invisible();
-    }
 
     public void CreatMoveField(Transform order,int moveableRange)
     {
         this.order = order;
         order.TryGetComponent(out orderAnimator);
+        order.TryGetComponent(out character);
+        movePoint = character.moveablePoint;
+        jumpHeight = character.jumpableHeight;
+        moveCount = movePoint;
+
         Vector2Int playerPos = order.position.To2DInt();
-        foreach (KeyValuePair<Vector2Int, AreaView> view in moveField)
-            view.Value.Return();
-
+        RemoveArea();
         AreaViewManager.Instance.CallAreaField(playerPos, moveableRange, moveField);
-        activeArea.Clear();
-
 
         for(int i = -moveableRange; i<=moveableRange;i++)
             for(int j =-moveableRange;j<=moveableRange;j++)
@@ -106,29 +113,23 @@ public class PlayerMove : MonoBehaviour
                 }
                 if (i == 0 & j == 0)
                     selectedList.Add(moveField[targetPos]);
-
-
-
             }
 
-
-        bool isFixed = true;
-        while(isFixed)
-        {
-            isFixed = false;
-            foreach (AreaView area in activeArea)
-                if (!CrossHeightCheck(area.transform.position.To2DInt(), jumpHeight))
-                {
-                    area.SetType(TILE_TYPE.Default);
-                    removeArea.Add(area);
-                    isFixed = true;
-                }
-            foreach(AreaView area in removeArea)
-                activeArea.Remove(area);
-            removeArea.Clear();
-        }
-
-
+        //bool isFixed = true;
+        //while(isFixed)
+        //{
+        //    isFixed = false;
+        //    foreach (AreaView area in activeArea)
+        //        if (!CrossHeightCheck(area.transform.position.To2DInt(), jumpHeight))
+        //        {
+        //            area.SetType(TILE_TYPE.Default);
+        //            removeArea.Add(area);
+        //            isFixed = true;
+        //        }
+        //    foreach(AreaView area in removeArea)
+        //        activeArea.Remove(area);
+        //    removeArea.Clear();
+        //}
 
         foreach (AreaView area in activeArea)
             if(!CrossObstacleCheck(area.transform.position.To2DInt()))
@@ -141,6 +142,184 @@ public class PlayerMove : MonoBehaviour
         removeArea.Clear();
 
     }
+
+    public IEnumerator MoveAreaSelect()
+    {
+        bool isPause = false;
+        while(true)
+        {
+            if(!isPause)
+            {
+                if (Input.GetMouseButtonDown(0))
+                {
+                    if (moveCount != 0)
+                    {
+                        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity, mask))
+                            if (hit.transform.TryGetComponent(out AreaView view))
+                                if (view.curState == TILE_TYPE.Enable)
+                                {
+                                    moveCount--;
+                                    view.SetState(TILE_TYPE.Selected);
+                                    selectedList.Add(view);
+                                    AreaDeActive();
+                                    if (moveCount != 0)
+                                        MoveableArea(view);
+                                }
+                    }
+                    else
+                    {
+                        if (GameManager.Instance.isConfirmIgnore)
+                        {
+                            isPause = true;
+                            MoveProgressing();
+                        }
+                        else
+                        {
+                            isPause = true;
+                            confirmBox.yesClickAction = () => { MoveProgressing(); };
+                            confirmBox.noClickAction = () => isPause = false;
+                            confirmBox.transform.position = order.position;
+                            confirmBox.transform.rotation = Camera.main.transform.rotation;
+                            confirmBox.gameObject.SetActive(true);
+                        }
+                    }
+                }
+                if (Input.GetMouseButtonDown(1) & !isPause)
+                    if (selectedList.Count > 1)
+                    {
+                        moveCount++;
+                        AreaView lastView = selectedList[selectedList.Count - 1];
+                        lastView.SetState(lastView.curType);
+                        selectedList.Remove(lastView);
+                        AreaDeActive();
+                        MoveableArea(selectedList[selectedList.Count - 1]);
+                    }
+            }
+            yield return null;
+        }
+    }
+
+
+
+    public void MoveProgressing()
+    {
+        StopCoroutine(selectArea);
+        selectArea = null;
+        moveProgress = StartCoroutine(Move());
+    }
+
+
+    public IEnumerator Move()
+    {
+        field.Cube(order.position.ToInt()).data.onChracter = null;
+        field.Cube(order.position.ToInt()).type = CUBE_TYPE.Air;
+        InvisibleArea();
+        wayPoints[0] = selectedList[0].transform.position;
+        CameraManager.Instance.VCMove(true);
+        for (int i = 1; i < selectedList.Count; i++)
+        {
+            if (selectedList[i].curType == TILE_TYPE.Passable)
+            {
+                isPass = true;
+                continue;
+            }
+
+            /////////////////////이동 설정 초기화///////////////////
+            moveSpeed = 0.5f;
+            for (int j = 1; j < wayPoints.Length; j++)
+                wayPoints[j] = selectedList[i].transform.position;
+            //////////////////////////////////////////////////////
+
+
+            /////////////////////이동경로 설정/////////////////////
+            float height = wayPoints[3].y - wayPoints[0].y;
+            if (height > 0)
+            {
+                wayPoints[1] = (wayPoints[3] + wayPoints[0]) / 2 + new Vector3(0, height / 2 + 0.5f, 0);
+                moveSpeed = 0.7f;
+            }
+            else if (height < 0)
+            {
+                Vector3 temp = wayPoints[3] - wayPoints[0];
+                wayPoints[1] = wayPoints[0] + new Vector3(temp.x = temp.x > 1 ? 0.5f : 0, 0, temp.z = temp.z > 1 ? 0.5f : 0);
+                wayPoints[2] = new Vector3(wayPoints[3].x, wayPoints[0].y - 0.3f, wayPoints[3].z);
+                moveSpeed = 0.6f;
+            }
+            else if (isPass)
+            {
+                wayPoints[1] = (wayPoints[3] + wayPoints[0]) / 2 + new Vector3(0, 0.2f, 0);
+                moveSpeed = 0.6f;
+            }
+            //////////////////////////////////////////////////////
+
+            ///////////////////이동방식 설정///////////////////////
+            PathType pathType;
+            if (height != 0 | isPass)
+                pathType = PathType.CatmullRom;
+            else
+                pathType = PathType.Linear;
+            //////////////////////////////////////////////////////
+
+            ////////////////////////이동//////////////////////////
+            isComplete = false;
+            if ((order.transform.forward + order.transform.position).To2DInt() != wayPoints[3].To2DInt())
+                yield return order.DOLookAt(new Vector3(wayPoints[3].x, order.transform.position.y, wayPoints[3].z), 0.3f).WaitForCompletion();
+
+            //////////////////애니메이션 설정//////////////////////
+
+            if (isPass | height != 0)
+                orderAnimator.SetInteger(animation, 16);
+            else
+                orderAnimator.SetInteger(animation, 20);
+            //////////////////////////////////////////////////////
+
+
+            order.transform.DOPath(wayPoints, moveSpeed, pathType).SetEase(Ease.Linear).OnComplete(() =>
+            {                                        
+                wayPoints[0] = wayPoints[3];          
+                isComplete = true;
+                isPass = false;
+            });
+            yield return moveDelay;
+        }
+        selectedList.Clear();
+        orderAnimator.SetInteger(animation, 0);
+
+
+        Vector3Int endPos = order.position.ToInt();
+        print(endPos);
+        field.Cube(endPos).type = CUBE_TYPE.OnCharacter;
+        if (field.Cube(endPos).data == null)
+            field.Cube(endPos).data = new CubeData(character);
+        field.Cube(endPos).data.onChracter = character;
+
+
+        CameraManager.Instance.VCMove(false);
+        moveCount = movePoint;
+        moveProgress = null;
+        CameraManager.Instance.InputStart();
+    }
+
+
+
+
+
+
+
+    public void RemoveArea()
+    {
+        foreach (KeyValuePair<Vector2Int, AreaView> view in moveField)
+            view.Value.Return();
+        moveField.Clear();
+        activeArea.Clear();
+    }
+
+    public void InvisibleArea()
+    {
+        foreach (KeyValuePair<Vector2Int, AreaView> view in moveField)
+            view.Value.Invisible();
+    }
+
 
 
     public void CrossCheck(Vector2Int origin, int range, Func<Vector2Int, bool> condition, Action<Vector2Int> trueAction)
@@ -183,7 +362,6 @@ public class PlayerMove : MonoBehaviour
     public bool CrossObstacleCheck(Vector2Int origin)
     {
         bool result = false;
-
         CrossCheck(origin,1,
             (checkPoint)=>
             {
@@ -194,143 +372,11 @@ public class PlayerMove : MonoBehaviour
             },
             (none) => { result = true; }
             );
-
-
         return result;
     }
 
 
 
-    public void MoveAreaSelect()
-    {
-        if(Input.GetMouseButtonDown(0))
-            if(moveCount!=0)
-            {
-                if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit, Mathf.Infinity, mask))
-                    if (hit.transform.TryGetComponent(out AreaView view))
-                        if (view.curState == TILE_TYPE.Enable)
-                        {
-                            moveCount--;
-                            view.SetState(TILE_TYPE.Selected);
-                            selectedList.Add(view);
-                            AreaDeActive();
-                            if(moveCount!=0)
-                                MoveableArea(view);
-                        }
-            }
-        if(Input.GetMouseButtonDown(1))
-            if(selectedList.Count>1)
-            {
-                moveCount++;
-                AreaView lastView = selectedList[selectedList.Count-1];
-                lastView.SetState(lastView.curType);
-                selectedList.Remove(lastView);
-                AreaDeActive();
-                MoveableArea(selectedList[selectedList.Count - 1]);
-            }
-    }
-
-
-
-    public void MoveProgressing()
-    {
-        if (Input.GetKeyDown(KeyCode.Space))
-            if (selectedList[selectedList.Count - 1].curType == TILE_TYPE.Passable)
-                return;
-            else
-                moveProgress = StartCoroutine(Move());
-    }
-
-
-
-
-    public IEnumerator Move()
-    {
-        InvisibleArea();
-        wayPoints[0] = selectedList[0].transform.position;
-        for(int i=1;i<selectedList.Count;i++)
-        {
-            if (selectedList[i].curType == TILE_TYPE.Passable)
-            {
-                isPass = true;
-                continue;
-            }
-
-            /////////////////////이동 설정 초기화///////////////////
-            moveSpeed = 0.5f;
-            for (int j =1; j<wayPoints.Length;j++)
-                wayPoints[j] = selectedList[i].transform.position;
-            //////////////////////////////////////////////////////
-
-
-            /////////////////////이동경로 설정/////////////////////
-            float height = wayPoints[3].y - wayPoints[0].y;
-            if (height > 0)
-            {
-                wayPoints[1] = (wayPoints[3] + wayPoints[0]) / 2 + new Vector3(0, height / 2 + 0.5f, 0);
-                moveSpeed = 0.7f;
-            }                
-            else if (height < 0)
-            {
-                Vector3 temp = wayPoints[3] - wayPoints[0];
-                wayPoints[1] = wayPoints[0] + new Vector3(temp.x = temp.x > 1 ? 0.5f : 0, 0, temp.z = temp.z > 1 ? 0.5f : 0);
-                wayPoints[2] = new Vector3(wayPoints[3].x, wayPoints[0].y - 0.3f, wayPoints[3].z);
-                moveSpeed = 0.4f;
-            }                
-            else if (isPass)
-            {
-                wayPoints[1] = (wayPoints[3] + wayPoints[0]) / 2 + new Vector3(0, 0.2f, 0);
-                moveSpeed = 0.6f;
-            }
- 
-            //////////////////////////////////////////////////////
-
-            ///////////////////이동방식 설정///////////////////////
-            PathType pathType;
-            if (height != 0 | isPass)
-                pathType = PathType.CatmullRom;
-            else
-                pathType = PathType.Linear;
-            //////////////////////////////////////////////////////
-
-
-
-
-
-
-            ////////////////////////이동//////////////////////////
-            isComplete = false;
-            if ((order.transform.forward+order.transform.position).To2DInt() != wayPoints[3].To2DInt())
-                yield return order.DOLookAt(new Vector3(wayPoints[3].x, order.transform.position.y, wayPoints[3].z), 0.3f).WaitForCompletion();
-
-            //////////////////애니메이션 설정//////////////////////
-
-            if (isPass | height != 0)
-                orderAnimator.SetInteger(animation, 16);
-            else
-                orderAnimator.SetInteger(animation, 20);
-
-
-
-            //////////////////////////////////////////////////////
-
-
-            order.transform.DOPath(wayPoints, moveSpeed, pathType).SetEase(Ease.Linear).OnComplete(() => 
-            { 
-                isComplete = true;
-                isPass = false;
-                wayPoints[0] = wayPoints[3];
-            });
-            yield return moveDelay;
-        }
-        selectedList.Clear();
-        orderAnimator.SetInteger(animation, 0);
-
-        moveCount = movePoint;
-        CreatMoveField(order,movePoint);
-        MoveableArea(moveField[order.position.To2DInt()]);
-        moveProgress = null;
-    }
 
 
 

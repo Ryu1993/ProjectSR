@@ -14,11 +14,15 @@ public class Fireball : CurveMotionPlayer
     {
         trailParticle.gameObject.SetActive(true);
         trailParticle.Play();
-        trailParticle.transform.DOPath(ways, 2f, PathType.CubicBezier).SetEase(Ease.OutExpo).OnComplete(() =>
+        trailParticle.transform.DOPath(ways, 2f, PathType.CubicBezier).SetEase(Ease.InExpo).OnComplete(() =>
         {
             trailParticle.gameObject.SetActive(false);
             diffusionParitcle.Play();
             action.Invoke();
         });
     }
+
+
+
+
 }
