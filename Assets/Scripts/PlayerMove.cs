@@ -82,8 +82,8 @@ public class PlayerMove : MonoBehaviour,IInputEventable
         jumpHeight = character.jumpableHeight;
         moveCount = movePoint;
 
-        Vector2Int playerPos = order.position.To2DInt();
         RemoveArea();
+        Vector2Int playerPos = order.position.To2DInt();
         AreaViewManager.Instance.CallAreaField(playerPos, moveableRange, moveField);
 
         for(int i = -moveableRange; i<=moveableRange;i++)
