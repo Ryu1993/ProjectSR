@@ -38,7 +38,7 @@ public class PlayerMotionManager : Singleton<PlayerMotionManager>
     public void SetAttackMotion()
     {
         MotionSetByCharacter(GameManager.Instance.party, () => print("로딩"));
-        MotionSetByCharacter(GameManager.Instance.enemys, () => print("로딩"));
+        MotionSetByCharacter(GameManager.Instance.enemy, () => print("로딩"));
     }
     private void MotionSetByCharacter(List<Character> characters,Action callback)
     {

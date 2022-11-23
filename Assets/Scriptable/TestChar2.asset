@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1fc325ae0a1380d429adb865fb112215, type: 3}
+  m_Name: TestChar2
+  m_EditorClassIdentifier: 
+  maxHp: 5
+  curHp: 5
+  movePower: 3
+  jumpHeight: 1
+  attackList: []
+  characterPrefab:
+    m_AssetGUID: 48f70831f55e0ef40af1f7ebbc33b1ae
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0

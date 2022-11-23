@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class CharacterMove : MonoBehaviour
+public class CharacterMove : Singleton<CharacterMove>
 {
 
     private FieldGenerator field { get { return FieldGenerator.Instance; } }
@@ -29,15 +29,6 @@ public class CharacterMove : MonoBehaviour
     public ConfirmUI confirmUI;
     public Camera mainCam;
 
-    //public void Update()
-    //{
-
-    //    if (Input.GetKeyDown(KeyCode.K) & pathSelect == null)
-    //        Move(curCharacter);
-
-    //}
-
-
     public void Move(Character character)
     {
         CreateMoveField(character);
@@ -46,6 +37,7 @@ public class CharacterMove : MonoBehaviour
 
     public void ReMove()
     {
+        confirmUI.gameObject.SetActive(false);
         curCharacter = null;
         StopCoroutine(pathSelect);
         AreaReset();
@@ -119,6 +111,7 @@ public class CharacterMove : MonoBehaviour
     {
         confirmUI.yesClickAction = () => { StopCoroutine(pathSelect); StartCoroutine(CharacterMovement()); confirmUI.gameObject.SetActive(false); };
         confirmUI.transform.position = curCharacter.transform.position;
+        confirmUI.transform.rotation = Camera.main.transform.rotation;
         confirmUI.gameObject.SetActive(true);
     }
 
@@ -160,7 +153,9 @@ public class CharacterMove : MonoBehaviour
                 chrAnimator.SetInteger(animatorParam, 16);
                 wayPoints[0] = targetPosition;
                 wayPoints[1] = prevPosition;
+                wayPoints[1].y = (targetPosition.y + prevPosition.y);
                 wayPoints[2] = targetPosition;
+                wayPoints[2].y = (targetPosition.y + prevPosition.y);
                 pathType = PathType.CubicBezier;
                 moveSpeed = 0.7f;
             }
@@ -175,7 +170,7 @@ public class CharacterMove : MonoBehaviour
             if ((characterTransform.forward + characterTransform.position).To2DInt() != targetPosition.To2DInt())
                 yield return characterTransform.DOLookAt(new Vector3(targetPosition.x, characterTransform.position.y, targetPosition.z), 0.3f).WaitForCompletion();
 
-            yield return characterTransform.DOPath(wayPoints, moveSpeed, pathType).OnComplete(() => 
+            yield return characterTransform.DOPath(wayPoints, moveSpeed, pathType).SetEase(Ease.Linear).OnComplete(() => 
             {
                 isPass = false;
                 prevPosition = targetPosition; 
@@ -187,7 +182,9 @@ public class CharacterMove : MonoBehaviour
         field.CubeDataCall(endPosition).onChracter = curCharacter;
         field.Cube(endPosition).type = CUBE_TYPE.OnCharacter;
 
-        AreaReset();
+        curCharacter.actionable[1] = false;
+        InputManager.Instance.InputReset();
+        ReMove();
         pathSelect = null;
     }
 
@@ -260,7 +257,6 @@ public class CharacterMove : MonoBehaviour
         Vector2Int orderPosition2D = order.transform.position.To2DInt();
         AreaViewManager.Instance.CallAreaFieldShape(orderPosition2D,moveRange ,moveField, FIELD_SHAPE.RangeLimitSquare);
         PassableCheck();
-        print(moveField.Count);
     }
 
     private void PassableCheck()

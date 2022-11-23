@@ -3,45 +3,33 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class CharacterUI : MonoBehaviour
 {
-    public UnityAction baseClickAction;
-    public Transform curSelectCharacter;
-    public CharacterMove move;
-    public CharacterAttack attack;
-    public Character curCharacter;
-   
+    private Character curCharacter;
+    public Image hpBar;
+    public Image icon;
+    public Button button;
 
-    public void AttackClick()
+    public void CharacterSelect()
     {
-        baseClickAction?.Invoke();
-
-    }
-
-    public void MoveClick()
-    {
-        baseClickAction?.Invoke();
-        move.Move(curCharacter);
-        InputManager.Instance.CancleBehaviour.Push(() => { move.ReMove();gameObject.SetActive(true); });
-        gameObject.SetActive(false);
-    }
-
-    public void RestClick()
-    {
-        baseClickAction?.Invoke();
-
-    }
-
-    public void Set(Character target)
-    {
-        curCharacter = target;
-        transform.position = curCharacter.transform.position;
-
-
+        CharacterUIManager.Instance.UIinteractionSwitch(false);
+        CameraManager.Instance.CharacterFocus(curCharacter);
+        ActionSelectUI.Instance.SelectBoxActive(transform.position, curCharacter);
+        InputManager.Instance.CancleBehaviour.Push(()=> 
+        {
+            ActionSelectUI.Instance.SelectBoxCancle();
+            CameraManager.Instance.CharacterFocusOut();
+            CharacterUIManager.Instance.UIinteractionSwitch(true);
+        });
     }
     
+    public void CharacterMatch(Character character)
+    {
+        curCharacter = character;
+        character.hpChangeAction += (value) => hpBar.fillAmount = value;
+    }
 
-
-   
+  
 }

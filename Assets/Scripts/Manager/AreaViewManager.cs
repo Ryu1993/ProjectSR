@@ -86,15 +86,12 @@ public class AreaViewManager : NonBehaviourSingleton<AreaViewManager>
                 else
                     count++;
             }
-        Debug.Log(count);
     }
 
     private void AddAreaView(Vector2Int targetCoord,ref Quaternion rightAngle, Dictionary<Vector2Int, AreaView> viewDictionary)
     {
         if (field.Surface(targetCoord, out Vector3Int coord))
             viewDictionary.Add(targetCoord, areaViewPool.Call(coord + Vector3.up * 0.1f, rightAngle).GetComponent<AreaView>());
-        else
-            Debug.Log("½ÇÆÐ");
     }
 
 

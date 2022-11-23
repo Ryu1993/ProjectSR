@@ -12,13 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4cbf2cec51dd4f3458780115a6fc7a2c, type: 3}
   m_Name: Fireball
   m_EditorClassIdentifier: 
-  selectRange: 5
-  attakcRange: 3
-  selectHeightAllow: 1
-  attakcHeightAllow: 1
   targetOnly: 0
+  selectRange: 4
+  selectHeightAllow: 1
   selectCubeMask: 
+  selectShape: 2
+  attakcRange: 2
+  attakcHeightAllow: 1
   attackCubeMask: 
+  attackShape: 2
   attackMotion:
     m_AssetGUID: cf39517cb36b4dd44b943e57f4e420e2
     m_SubObjectName: 

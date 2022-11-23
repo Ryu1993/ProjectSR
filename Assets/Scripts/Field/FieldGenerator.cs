@@ -64,6 +64,7 @@ public class FieldGenerator : Singleton<FieldGenerator>
         new Vector3Int(-1,0,0),
     };
 
+
     internal void AllCube(Action<int,int,int> action)
     {
         for (int i = 0; i < size.x; i++)
@@ -135,7 +136,6 @@ public class FieldGenerator : Singleton<FieldGenerator>
 
         /////////////////////¸Ê È¯°æ ¼³Á¤///////////////////////////
         TreeCreator();
-
     }
 
 
@@ -515,7 +515,56 @@ public class FieldGenerator : Singleton<FieldGenerator>
         return null;
     }
 
- 
+    public void PointSet(out Vector2Int partySpot,out Vector2Int enemySpot)
+    {
+        partySpot = Vector2Int.zero;
+        enemySpot = new Vector2Int(size.x - 1, size.z - 1);
+        for(int i=0; i<size.x;i++)
+        {
+            bool isBreak = false;
+            for (int j = 0; j < size.z; j++)
+            {
+                Vector2Int spot = new Vector2Int(i, j);
+                if (SurfaceState(spot) != CUBE_TYPE.Air)
+                    continue;
+                int acceptCount = 0;
+                CubeCheck.CustomCheck(CHECK_TYPE.SIDE, spot, 1,
+                    (check) => SurfaceState(check) == CUBE_TYPE.Air,
+                    (none) => { acceptCount++; });
+                if (acceptCount == 8)
+                {
+                    partySpot = spot;
+                    isBreak = true;
+                    break;
+                }
+            }
+            if (isBreak)
+                break;
+        }
+        for (int i = size.x-1; i>=0; i--)
+        {
+            bool isBreak = false;
+            for (int j = size.z-1; j >=0; j--)
+            {
+                Vector2Int spot = new Vector2Int(i, j);
+                if (SurfaceState(spot) != CUBE_TYPE.Air)
+                    continue;
+                int acceptCount = 0;
+                CubeCheck.CustomCheck(CHECK_TYPE.SIDE, spot, 1,
+                    (check) => SurfaceState(check) == CUBE_TYPE.Air,
+                    (none) => acceptCount++);
+                if (acceptCount == 8)
+                {
+                    enemySpot = spot;
+                    isBreak = true;
+                    break;
+                }
+            }
+            if (isBreak)
+                break;
+        }
+    }
+
 
 
 }

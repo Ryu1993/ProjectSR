@@ -20,7 +20,7 @@ public static class CubeCheck
 
     public static void CustomCheck(CHECK_TYPE type, Vector2Int origin, int range, Func<Vector2Int, bool> condition, Action<Vector2Int> trueAction)
     {
-        Func<int, int, bool> check = (x, y) => true;
+        Func<int, int, bool> check = (x, y) => false;
         switch(type)
         {
             case CHECK_TYPE.CROSS:

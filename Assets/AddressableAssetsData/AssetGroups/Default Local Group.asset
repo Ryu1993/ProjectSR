@@ -92,6 +92,14 @@ MonoBehaviour:
     m_Address: AnimatinoClip/ATK2
     m_ReadOnly: 0
     m_SerializedLabels: []
+  - m_GUID: 7f58a75e75f37ff4ab348dbc9415295c
+    m_Address: Mage
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 48f70831f55e0ef40af1f7ebbc33b1ae
+    m_Address: Knight
+    m_ReadOnly: 0
+    m_SerializedLabels: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 5cfa9f7d18b001145b33578bc383e564, type: 2}
   m_SchemaSet:

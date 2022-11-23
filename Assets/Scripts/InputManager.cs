@@ -16,6 +16,13 @@ public class InputManager : Singleton<InputManager>
                 cancleBehaviour.Pop().Invoke();
     }
 
+    public void InputReset()
+    {
+        cancleBehaviour.Clear();
+        CameraManager.Instance.CharacterFocusOut();
+        CharacterUIManager.Instance.UIinteractionSwitch(true);
+    }
+
 
 
 

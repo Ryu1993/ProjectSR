@@ -1,23 +1,60 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class Character : MonoBehaviour
 {
-    private Animator _animator;
+    private Animator animator;
     public List<AttackInfo> attackList;
     public int moveablePoint;
     public int jumpableHeight;
+    /// <summary>
+    /// 0:Attack 1: Move 2 : Rest
+    /// </summary>
+    public bool[] actionable;
+    private float maxHp;
+    private int hp;
+    public UnityAction<float> hpChangeAction;
+    public CharacterInfo info;
+
+
+
+    public void ActionReset()
+    {
+        for (int i = 0; i < actionable.Length; i++)
+            actionable[i] = true;
+    }
+
+    public void CharacterSetting(CharacterInfo chrInfo)
+    {
+        info = chrInfo;
+        maxHp = info.maxHp;
+        Hp = info.curHp;
+        attackList = info.attackList;
+        moveablePoint = info.movePower;
+        jumpableHeight = info.jumpHeight;
+        actionable = new bool[3];
+        ActionReset();
+    }
 
 
 
 
 
 
-
-
-
-
-
-    public Animator animator { get { if (_animator == null) transform.TryGetComponent(out _animator); return _animator; } }
+    public Animator Animator
+    { 
+        get { if (animator == null) transform.TryGetComponent(out animator); return animator; }
+    }
+    public int Hp
+    {
+        get { return hp; }
+        set
+        {
+            hp = value;
+            info.curHp = value;
+            hpChangeAction?.Invoke(hp / maxHp);
+        }
+    }
 }
