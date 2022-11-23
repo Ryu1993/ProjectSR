@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Xml;
 using Unity.VisualScripting.FullSerializer;
+using UnityEditor.Build.Pipeline;
 using UnityEngine;
 
 public enum CHECK_TYPE
@@ -19,24 +20,19 @@ public static class CubeCheck
 
     public static void CustomCheck(CHECK_TYPE type, Vector2Int origin, int range, Func<Vector2Int, bool> condition, Action<Vector2Int> trueAction)
     {
-        bool isTypeCheck;
+        Func<int, int, bool> check = (x, y) => true;
+        switch(type)
+        {
+            case CHECK_TYPE.CROSS:
+                check = (x, y) => x != 0 & y != 0;
+                break;
+        }
         for (int i = -range; i <= range; i++)
             for (int j = -range; j <= range; j++)
             {
-                switch (type)
-                {
-                    case CHECK_TYPE.CROSS:
-                        isTypeCheck = (i != 0 & j != 0);
-                        break;
-                    default:
-                        isTypeCheck = false;
-                        break;
-                }
-                if (isTypeCheck) continue;
+                if (check(i,j)) continue;
                 if (i == 0 & j == 0) continue;
-
                 Vector2Int checkPoint = new Vector2Int(i, j) + origin;
-
                 if (condition.Invoke(checkPoint))
                     trueAction.Invoke(checkPoint);
             }

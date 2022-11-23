@@ -8,8 +8,9 @@ public class CharacterUI : MonoBehaviour
 {
     public UnityAction baseClickAction;
     public Transform curSelectCharacter;
-    public PlayerMove move;
+    public CharacterMove move;
     public CharacterAttack attack;
+    public Character curCharacter;
    
 
     public void AttackClick()
@@ -21,8 +22,8 @@ public class CharacterUI : MonoBehaviour
     public void MoveClick()
     {
         baseClickAction?.Invoke();
-        move.order = curSelectCharacter;
-        move.InputStart();
+        move.Move(curCharacter);
+        InputManager.Instance.CancleBehaviour.Push(() => { move.ReMove();gameObject.SetActive(true); });
         gameObject.SetActive(false);
     }
 
@@ -32,6 +33,13 @@ public class CharacterUI : MonoBehaviour
 
     }
 
+    public void Set(Character target)
+    {
+        curCharacter = target;
+        transform.position = curCharacter.transform.position;
+
+
+    }
     
 
 

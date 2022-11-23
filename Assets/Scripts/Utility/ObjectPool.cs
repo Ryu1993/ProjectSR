@@ -71,6 +71,7 @@ public class ObjectPool
         else
         {
             Objtransform.SetParent(m_active, false);
+            Debug.Log(Objtransform.parent);
         }
         return Objtransform;
     }

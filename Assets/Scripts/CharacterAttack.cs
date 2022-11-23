@@ -22,9 +22,9 @@ public class CharacterAttack : MonoBehaviour,IInputEventable
     public Coroutine rangeViewProgress;
 
 
-    public Transform order;
+    //public Transform order;
     public Character character;
-    public AttackInfo attack;
+    private AttackInfo attack;
 
     private RaycastHit hit;
     [SerializeField] private LayerMask mask;
@@ -34,8 +34,8 @@ public class CharacterAttack : MonoBehaviour,IInputEventable
         
         if (Input.GetKeyDown(KeyCode.J))
         {
-            AttackAreaCreate(order);
-            AreaCut(AreaType.Select, AreaShape.Square, transform.position.To2DInt());
+            AttackAreaCreate(character);
+            AreaCreate(AreaType.Select, FIELD_SHAPE.Square, transform.position.To2DInt());
         }
         if(Input.GetKeyDown(KeyCode.H))
             if (selectRangeList.Count != 0)
@@ -43,7 +43,7 @@ public class CharacterAttack : MonoBehaviour,IInputEventable
                 if (rangeViewProgress != null)
                 {
                     StopCoroutine(rangeViewProgress);
-                    RangeListClear(attackRangeList);
+                    AreaFieldClear(attackRangeList);
                     rangeViewProgress = null;
                 }
                 else
@@ -64,14 +64,14 @@ public class CharacterAttack : MonoBehaviour,IInputEventable
     }
 
 
-    public void AttackAreaCreate(Transform character)
+    public void AttackAreaCreate(Character character)
     {
-        transform.position = character.position;
-        attack = order.GetComponent<Character>().attackList[0];
-        AreaViewManager.Instance.CallAreaField(transform.position.To2DInt(), attack.selectRange, selectRangeList);
+        transform.position = character.transform.position;
+        attack = character.attackList[0];
+        //AreaViewManager.Instance.CallAreaField(transform.position.To2DInt(), attack.selectRange, selectRangeList);
     }
 
-    public void AreaCut(AreaType targetArea,AreaShape shape,Vector2Int origin)
+    public void AreaCreate(AreaType targetArea,FIELD_SHAPE shape,Vector2Int origin)
     {
         Dictionary<Vector2Int, AreaView> areaDic = null;
         TILE_TYPE type = TILE_TYPE.Default;
@@ -97,44 +97,70 @@ public class CharacterAttack : MonoBehaviour,IInputEventable
                 type = TILE_TYPE.Selected;
                 break;
         }
-        switch(shape)
+
+        AreaFieldClear(areaDic);
+        AreaViewManager.Instance.CallAreaFieldShape(origin, range, areaDic, shape);
+        areaDic.LoopDictionaryValue((target) =>
         {
-            case AreaShape.Square:
-                foreach (KeyValuePair<Vector2Int, AreaView> view in areaDic)
-                {
-                    if (AreaCheck(origin, view.Key, areaDic,cubeRayMask,isHeightAllow, isTargetOnly))
-                        view.Value.SetType(type);
-                }
-                break;
-            case AreaShape.Cross:
-                CubeCheck.CustomCheck(CHECK_TYPE.CROSS, origin, range,
-                    (target) => { return AreaCheck(origin, target, areaDic,cubeRayMask ,isHeightAllow, isTargetOnly); },
-                    (target) => areaDic[target].SetType(type));
-                break;
-            case AreaShape.Diagonal:
-                CubeCheck.DiagonalCheck(origin, range,
-                    (target) => { return AreaCheck(origin, target, areaDic,cubeRayMask ,isHeightAllow, isTargetOnly); },
-                    (target) => areaDic[target].SetType(type));
-                break;
-        }
+            if (AreaCheck(origin, target, cubeRayMask, isHeightAllow, isTargetOnly))
+                target.SetType(type);
+        }) ;
+
+        //switch (shape)
+        //{
+        //    case FIELD_SHAPE.Square:
+        //        foreach (KeyValuePair<Vector2Int, AreaView> view in areaDic)
+        //        {
+        //            if (AreaCheck(origin, view.Key, areaDic, cubeRayMask, isHeightAllow, isTargetOnly))
+        //                view.Value.SetType(type);
+        //        }
+        //        break;
+        //    case FIELD_SHAPE.Cross:
+        //        CubeCheck.CustomCheck(CHECK_TYPE.CROSS, origin, range,
+        //            (target) => { return AreaCheck(origin, target, areaDic, cubeRayMask, isHeightAllow, isTargetOnly); },
+        //            (target) => areaDic[target].SetType(type));
+        //        break;
+        //    case FIELD_SHAPE.Diagonal:
+        //        CubeCheck.DiagonalCheck(origin, range,
+        //            (target) => { return AreaCheck(origin, target, areaDic, cubeRayMask, isHeightAllow, isTargetOnly); },
+        //            (target) => areaDic[target].SetType(type));
+        //        break;
+        //}
     }
-    private bool AreaCheck(Vector2Int origin2D,Vector2Int target,Dictionary<Vector2Int, AreaView> areaDic, CUBE_TYPE[] cubeRayMask,bool isHeightAllow,bool isTargetOnly)
+    //private bool AreaCheck(Vector2Int origin2D,Vector2Int target,Dictionary<Vector2Int, AreaView> areaDic, CUBE_TYPE[] cubeRayMask,bool isHeightAllow,bool isTargetOnly)
+    //{
+    //    field.Surface(origin2D, out Vector3Int origin);     
+    //    if (areaDic.TryGetValue(target, out AreaView area))
+    //    {
+    //        Vector3Int areaPosition = area.transform.position.ToInt();
+    //        if (cubeRayMask.Length != 0)
+    //            if (CubeCheck.CubeRayCast(origin,areaPosition, cubeRayMask))
+    //                return false;
+    //        if (!isHeightAllow)
+    //            if (origin.y != areaPosition.y)
+    //                return false;
+    //        if (isTargetOnly)
+    //            if (field.SurfaceState(new Vector2Int(areaPosition.x,areaPosition.z))!= CUBE_TYPE.OnCharacter)
+    //                return false;
+    //        return true;
+    //    }
+    //    return false;
+    //}
+
+    private bool AreaCheck(Vector2Int origin2D,AreaView target, CUBE_TYPE[] cubeRayMask,bool isHeightAllow,bool isTargetOnly)
     {
-        field.Surface(origin2D, out Vector3Int origin);     
-        if (areaDic.TryGetValue(target, out AreaView area))
-        {
-            if (cubeRayMask.Length != 0)
-                if (CubeCheck.CubeRayCast(origin, area.transform.position.ToInt(), cubeRayMask))
-                    return false;
-            if (!isHeightAllow)
-                if (origin.y != Mathf.RoundToInt(area.transform.position.y))
-                    return false;
-            if (isTargetOnly)
-                if (field.SurfaceState(area.transform.position.To2DInt()) != CUBE_TYPE.OnCharacter)
-                    return false;
-            return true;
-        }
-        return false;
+        field.Surface(origin2D, out Vector3Int origin3D);
+        Vector3Int targetPosition = target.transform.position.ToInt();
+        if (cubeRayMask.Length != 0)
+            if (CubeCheck.CubeRayCast(origin3D, targetPosition, cubeRayMask))
+                return false;
+        if (!isHeightAllow)
+            if (origin3D.y != targetPosition.y)
+                return false;
+        if (isTargetOnly)
+            if (field.Cube(targetPosition).type != CUBE_TYPE.OnCharacter)
+                return false;
+        return true;
     }
 
 
@@ -153,13 +179,13 @@ public class CharacterAttack : MonoBehaviour,IInputEventable
                         if (prevPos != curPos)
                         {
                             if (attackRangeList.Count != 0)
-                                RangeListClear(attackRangeList);
+                                AreaFieldClear(attackRangeList);
    
 
 
                             character.transform.LookAt(new Vector3(curPos.x,character.transform.position.y,curPos.y));
-                            AreaViewManager.Instance.CallAreaField(curPos, attack.attakcRange, attackRangeList);
-                            AreaCut(AreaType.Attack, AreaShape.Cross, curPos);
+                            //AreaViewManager.Instance.CallAreaField(curPos, attack.attakcRange, attackRangeList);
+                            AreaCreate(AreaType.Attack, FIELD_SHAPE.Square, curPos);
                             attackRangeList.TryGetValue(curPos, out center);
                             center.SetState(TILE_TYPE.Disable);
  
@@ -168,12 +194,12 @@ public class CharacterAttack : MonoBehaviour,IInputEventable
             }
             if(Input.GetMouseButtonDown(0))
             {
-                LoopDictionary(attackRangeList, (view) => view.Invisible());
-                RangeListClear(selectRangeList);
+                //attackRangeList.LoopDictionaryValue((view) => view.Invisible());
+                AreaFieldClear(selectRangeList);
                 PlayerMotionManager.Instance.attackMotions[attack].Play(character.animator, center.transform.position, () => 
                 { 
                     print("공격"); // 이부분 커스텀
-                    RangeListClear(attackRangeList);
+                    AreaFieldClear(attackRangeList);
                     rangeViewProgress = null;
                 });
                 yield break;
@@ -182,16 +208,9 @@ public class CharacterAttack : MonoBehaviour,IInputEventable
         }
     }
 
-
-    private void LoopDictionary(Dictionary<Vector2Int, AreaView> target,Action<AreaView> action)
+    private void AreaFieldClear(Dictionary<Vector2Int, AreaView> target)
     {
-        foreach (KeyValuePair<Vector2Int, AreaView> view in target)
-            action(view.Value);
-    }
-
-    private void RangeListClear(Dictionary<Vector2Int, AreaView> target)
-    {
-        LoopDictionary(target, (view) => view.Return());
+        target.LoopDictionaryValue((view) => view.Return());
         target.Clear();
     }
     

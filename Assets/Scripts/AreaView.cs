@@ -15,8 +15,6 @@ public class AreaView : MonoBehaviour,IPoolingable
     [SerializeField] private Color[] colors;
     private MeshFilter meshFilter;
     private MeshRenderer meshRenderer;
-    public Transform player;
-    public PlayerMove playerMove;
     public TILE_TYPE curType;
     public TILE_TYPE curState;
 
@@ -39,7 +37,7 @@ public class AreaView : MonoBehaviour,IPoolingable
     public void Invisible()
     {
         meshRenderer.enabled = false;
-        transform.position = transform.position - new Vector3(0, 0.1f, 0);
+        curState = TILE_TYPE.Disable;
     }
 
     private void SetColor(TILE_TYPE type,ref TILE_TYPE cur)

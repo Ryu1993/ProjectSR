@@ -76,6 +76,7 @@ public class CameraManager : Singleton<CameraManager> , IInputEventable
         characterUI.transform.position = selectCharacter.transform.position;
         characterUI.transform.rotation = characterVC.transform.rotation;
         characterUI.curSelectCharacter = selectCharacter.transform;
+        characterUI.curCharacter = selectCharacter;
         characterUI.baseClickAction = InputBreak;
         characterUI.gameObject.SetActive(true);
     }
@@ -95,10 +96,6 @@ public class CameraManager : Singleton<CameraManager> , IInputEventable
                             view.Return();
                         CharacterFocus();
                     }
-            }
-            if (Input.GetMouseButtonDown(1))
-            {
-                SelectTileSetting();
             }
             yield return null;
         }

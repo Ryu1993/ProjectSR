@@ -486,17 +486,33 @@ public class FieldGenerator : Singleton<FieldGenerator>
     }
 
 
+
+
     public CUBE_TYPE SurfaceState(Vector2Int key)
     {
-        if (Surface(key, out Vector3 coord))
+        if (Surface(key, out Vector3Int coord))
         {
-            Vector3Int intCoord = coord.ToInt();
-            if (Cube(intCoord + new Vector3Int(0, -1, 0)).type == CUBE_TYPE.Water)
+            if (Cube(coord -Vector3Int.up).type == CUBE_TYPE.Water)
                 return CUBE_TYPE.Water;
             else
-                return Cube(intCoord).type;
+                return Cube(coord).type;
         }
         return CUBE_TYPE.Out;
+    }
+
+    public CubeData CubeDataCall(Vector3Int coord)
+    {
+        if(Cube(coord).type!=CUBE_TYPE.Out)
+        {
+            CubeData data;
+            if (Cube(coord).data == null)
+                data = new CubeData();
+            else
+                data = Cube(coord).data;
+
+            return data;
+        }
+        return null;
     }
 
  
