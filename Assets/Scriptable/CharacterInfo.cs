@@ -10,6 +10,7 @@ public class CharacterInfo : ScriptableObject
     public int curHp;
     public int movePower;
     public int jumpHeight;
+    public Sprite iconSprite;
 
     public List<AttackInfo> attackList;
     public AssetReference characterPrefab;

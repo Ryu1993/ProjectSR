@@ -5,19 +5,28 @@ using UnityEngine.Events;
 
 public class Character : MonoBehaviour
 {
-    private Animator animator;
+    protected Animator animator;
     public List<AttackInfo> attackList;
+    public List<AttackInfo> attackableList = new List<AttackInfo>(4);
     public int moveablePoint;
     public int jumpableHeight;
     /// <summary>
     /// 0:Attack 1: Move 2 : Rest
     /// </summary>
     public bool[] actionable;
-    private float maxHp;
-    private int hp;
+    protected float maxHp;
+    protected int hp;
     public UnityAction<float> hpChangeAction;
     public CharacterInfo info;
 
+
+    public void TurnReset()
+    {
+        ActionReset();
+        attackableList.Clear();
+        foreach (AttackInfo attackInfo in attackList)
+            attackableList.Add(attackInfo);
+    }
 
 
     public void ActionReset()
@@ -35,7 +44,7 @@ public class Character : MonoBehaviour
         moveablePoint = info.movePower;
         jumpableHeight = info.jumpHeight;
         actionable = new bool[3];
-        ActionReset();
+        TurnReset();
     }
 
 

@@ -24,24 +24,62 @@ public class CharacterAttack : Singleton<CharacterAttack>
 
 
 
-    public void AttackAreaCreate(Character character,AttackInfo info)
+    public void AttackAreaCreate(Character character,AttackInfo info,bool isPlayer = true)
     {
         this.character = character;
         transform.position = character.transform.position;
         attack = info;
         AreaCreate(AreaType.Select,transform.position.To2DInt());
-        rangeViewProgress = StartCoroutine(AreaRangeView());      
+        if(isPlayer)
+            rangeViewProgress = StartCoroutine(AreaRangeView());
     }
 
     public void AttackAreaRemove()
     {
-        StopCoroutine(rangeViewProgress);
+        if(rangeViewProgress != null)
+            StopCoroutine(rangeViewProgress);
         character = null;
         attack = null;
         AreaFieldClear(selectRangeList);
         AreaFieldClear(attackRangeList);      
     }
 
+    public bool AttackableCheck(Monster monster,AttackInfo info,Character target)
+    {
+        AttackAreaCreate(monster, info, false);
+        bool result = false;
+        selectRangeList.LoopDictionary((pair) =>
+        {
+            if (field.SurfaceState(pair.Key) == CUBE_TYPE.OnCharacter)
+            {
+                field.Surface(pair.Key, out Vector3Int coord);
+                if (field.CubeDataCall(coord).onChracter == target)
+                {
+                    result = true;
+                }                 
+            }            
+        }
+        );
+        AttackAreaRemove();
+        return result;
+    }
+
+    public YieldInstruction MonsterAttack(Character target)
+    {
+        AreaView center = null;
+        selectRangeList.LoopDictionaryKey((key) =>
+        {
+            if (field.SurfaceState(key) == CUBE_TYPE.OnCharacter)
+            {
+                field.Surface(key, out Vector3Int coord);
+                if (field.CubeDataCall(coord).onChracter == target)
+                {
+                    RangeAreaCreate(key, ref center);
+                }
+            }
+        });
+        return AttackAction(center.transform.position, false);
+    }
 
 
     private void AreaCreate(AreaType targetArea,Vector2Int origin)
@@ -106,7 +144,7 @@ public class CharacterAttack : Singleton<CharacterAttack>
         {
             AreaFieldClear(attackRangeList);
             field.Surface(centerPosition, out Vector3 target);
-            center = AreaViewManager.Instance.CallAreaView(target, null);
+            center = AreaViewManager.Instance.CallAreaView(target+new Vector3(0,0.1f,0), null);
             attackRangeList.Add(centerPosition,center);
         }
         else
@@ -148,16 +186,7 @@ public class CharacterAttack : Singleton<CharacterAttack>
             {
                 if(attackRangeList.Count!=0)
                 {
-                    AreaFieldClear(selectRangeList);
-                    PlayerMotionManager.Instance.attackMotions[attack].Play(character.Animator, center.transform.position, () =>
-                    {
-                        print("공격"); // 이부분 커스텀
-
-                        AreaFieldClear(attackRangeList);
-                        rangeViewProgress = null;
-                        character.actionable[0] = false;
-                        InputManager.Instance.InputReset();
-                    });
+                    AttackAction(center.transform.position);
                     yield break;
                 }
             }
@@ -170,7 +199,20 @@ public class CharacterAttack : Singleton<CharacterAttack>
         target.LoopDictionaryValue((view) => view.Return());
         target.Clear();
     }
-    
+
+    private YieldInstruction AttackAction(Vector3 target, bool isPlayer = true)
+    {
+        AreaFieldClear(selectRangeList);
+        return PlayerMotionManager.Instance.attackMotions[attack].Play(character.Animator, target, () =>
+        {
+            print("공격"); // 이부분 커스텀
+
+            AreaFieldClear(attackRangeList);
+            rangeViewProgress = null;
+            character.actionable[0] = false;
+            InputManager.Instance.InputReset(isPlayer);
+        });
+    }
 
 
 }

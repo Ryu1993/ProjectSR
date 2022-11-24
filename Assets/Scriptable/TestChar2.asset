@@ -16,7 +16,9 @@ MonoBehaviour:
   curHp: 5
   movePower: 3
   jumpHeight: 1
-  attackList: []
+  iconSprite: {fileID: 21300000, guid: c59096e2c837f024bb38c2db3ff6d976, type: 3}
+  attackList:
+  - {fileID: 11400000, guid: 52bc09e1fa026ae46985a61672de14de, type: 2}
   characterPrefab:
     m_AssetGUID: 48f70831f55e0ef40af1f7ebbc33b1ae
     m_SubObjectName: 

@@ -16,11 +16,11 @@ public class InputManager : Singleton<InputManager>
                 cancleBehaviour.Pop().Invoke();
     }
 
-    public void InputReset()
+    public void InputReset(bool isPlayer = true)
     {
         cancleBehaviour.Clear();
         CameraManager.Instance.CharacterFocusOut();
-        CharacterUIManager.Instance.UIinteractionSwitch(true);
+        CharacterUIManager.Instance.UIinteractionSwitch(isPlayer);
     }
 
 

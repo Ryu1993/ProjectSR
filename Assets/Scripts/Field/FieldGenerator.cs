@@ -22,6 +22,7 @@ public struct Cube
 {
     public CUBE_TYPE type;
     public CubeData data;
+
     public Cube(CUBE_TYPE type)
     {
         this.type = type;
@@ -506,7 +507,11 @@ public class FieldGenerator : Singleton<FieldGenerator>
         {
             CubeData data;
             if (Cube(coord).data == null)
+            {
                 data = new CubeData();
+                Cube(coord).data = data;
+            }
+                
             else
                 data = Cube(coord).data;
 

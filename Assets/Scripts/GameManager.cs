@@ -5,6 +5,7 @@ using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Playables;
 
 public class GameManager : Singleton<GameManager>
 {
@@ -33,10 +34,11 @@ public class GameManager : Singleton<GameManager>
         Span<Vector3Int> spotAround = stackalloc Vector3Int[9];
         CharacterPositionSet(partySpot, ref spotAround, party);
         CharacterPositionSet(enemySpot,ref spotAround, enemy);
-        foreach(Character playable in party)
+        for(int i= 0; i<party.Count;i++)
         {
+
             CharacterUI ui = Instantiate(charUI, charUICanvas);
-            ui.CharacterMatch(playable);
+            ui.CharacterMatch(party[i], playerCharacter[i].iconSprite);
             CharacterUIManager.Instance.UIAdd(ui);
         }
         PlayerMotionManager.Instance.SetAttackMotion();
@@ -73,8 +75,37 @@ public class GameManager : Singleton<GameManager>
         {
             Vector3Int charPos = spotAround[i];
             list[i].transform.position = charPos;
-            field.CubeDataCall(charPos).onChracter = party[i];
+            field.CubeDataCall(charPos).onChracter = list[i];
+            field.Cube(charPos).type = CUBE_TYPE.OnCharacter;
         }
+    }
+
+    public IEnumerator EnemyTurn()
+    {
+        foreach(var e in enemy)
+        {
+            Monster mon = e as Monster;
+            yield return StartCoroutine(mon.MonsterAction());
+        }
+    }
+
+    bool turnSwith = false;
+
+    public void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Q)&!turnSwith)
+            StartCoroutine(EnemyTurn());
+        if(Input.GetKeyDown(KeyCode.W)&turnSwith)
+        {        
+            foreach (var c in party)
+                c.TurnReset();
+            CharacterUIManager.Instance.UIinteractionSwitch(true);
+        }
+        if(Input.GetKeyDown(KeyCode.E))
+        {
+            turnSwith = !turnSwith;
+        }
+
     }
 
 }

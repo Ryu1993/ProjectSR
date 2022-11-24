@@ -16,7 +16,9 @@ public class CharacterUI : MonoBehaviour
     {
         CharacterUIManager.Instance.UIinteractionSwitch(false);
         CameraManager.Instance.CharacterFocus(curCharacter);
-        ActionSelectUI.Instance.SelectBoxActive(transform.position, curCharacter);
+
+        ActionSelectUI.Instance.SelectBoxActive(curCharacter);
+
         InputManager.Instance.CancleBehaviour.Push(()=> 
         {
             ActionSelectUI.Instance.SelectBoxCancle();
@@ -25,9 +27,10 @@ public class CharacterUI : MonoBehaviour
         });
     }
     
-    public void CharacterMatch(Character character)
+    public void CharacterMatch(Character character,Sprite sprite)
     {
         curCharacter = character;
+        icon.sprite = sprite;
         character.hpChangeAction += (value) => hpBar.fillAmount = value;
     }
 

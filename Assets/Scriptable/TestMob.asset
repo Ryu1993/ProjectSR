@@ -10,17 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1fc325ae0a1380d429adb865fb112215, type: 3}
-  m_Name: TestCharacter
+  m_Name: TestMob
   m_EditorClassIdentifier: 
   maxHp: 5
   curHp: 5
   movePower: 5
   jumpHeight: 1
-  iconSprite: {fileID: 21300000, guid: 2f25499a7406a5f40b1bb4c79f4b6c2a, type: 3}
   attackList:
   - {fileID: 11400000, guid: f98e747d0d1f69946a4b7dbcf7b315b3, type: 2}
   characterPrefab:
-    m_AssetGUID: 7f58a75e75f37ff4ab348dbc9415295c
+    m_AssetGUID: d9988005cb7e87b4eb18ff85040859b4
     m_SubObjectName: 
     m_SubObjectType: 
     m_EditorAssetChanged: 0

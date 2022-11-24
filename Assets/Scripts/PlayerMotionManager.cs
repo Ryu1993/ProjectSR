@@ -12,7 +12,6 @@ using UnityEngine.UIElements;
 
 public class PlayerMotionManager : Singleton<PlayerMotionManager>
 {   
-    [HideInInspector]public readonly int parameterAnimation = Animator.StringToHash("animation");
     public List<KeyValuePair<AnimationClip, AnimationClip>> controllerClips = new List<KeyValuePair<AnimationClip, AnimationClip>>();
     public Dictionary<AttackInfo, MotionPlayer> attackMotions = new Dictionary<AttackInfo, MotionPlayer>();
     public AnimatorOverrideController overrideController;
@@ -47,9 +46,11 @@ public class PlayerMotionManager : Singleton<PlayerMotionManager>
                 if (!attackMotions.ContainsKey(info))
                 {
                     MotionPlayer player = Activator.CreateInstance(Type.GetType(info.name)) as MotionPlayer;
+                    player.overrideController = overrideController;
                     if (player == null) continue;
                     info.attackMotion.LoadAssetAsync<AnimationClip>().Completed += 
                         (handle) => { player.motionClip = handle.Result;
+                                      player.motionClipPair = new KeyValuePair<AnimationClip, AnimationClip>(originalAttack, player.motionClip);
                                       callback.Invoke(); };
                     info.attackEffect.InstantiateAsync(Vector3.zero, Quaternion.identity).Completed += 
                         (handle) => { player.effect = handle.Result;

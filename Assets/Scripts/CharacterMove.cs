@@ -26,7 +26,6 @@ public class CharacterMove : Singleton<CharacterMove>
     private int maxMoveCount;
 
     public LayerMask mask;
-    public ConfirmUI confirmUI;
     public Camera mainCam;
 
     public void Move(Character character)
@@ -37,10 +36,11 @@ public class CharacterMove : Singleton<CharacterMove>
 
     public void ReMove()
     {
-        confirmUI.gameObject.SetActive(false);
         curCharacter = null;
-        StopCoroutine(pathSelect);
+        if(pathSelect!=null)
+            StopCoroutine(pathSelect);
         AreaReset();
+        ActionSelectUI.Instance.SelectBoxCancle();
     }
 
     private void AreaReset()
@@ -57,6 +57,50 @@ public class CharacterMove : Singleton<CharacterMove>
     }
 
 
+    public bool MonsterMoveCheck(Monster monster,Vector3 target,int movePoint)
+    {
+        Vector2Int target2D = target.To2DInt();
+        AreaView next = null;   
+        CreateMoveField(monster);
+        EnableCheck(monster.transform.position.To2DInt());
+        for(int i =0; i<movePoint;i++)
+        {
+            bool isNextable = false;
+            float distance = 100;
+            foreach (AreaView nextArea in enableArea)
+            {
+                float checkDistance = Vector2Int.Distance(target2D, nextArea.transform.position.To2DInt());
+                if(checkDistance <=distance)
+                {
+                    next = nextArea;
+                    distance = checkDistance;
+                    isNextable = true;
+                }
+            }
+            enableArea.Clear();
+            if (isNextable)
+            {
+                next.SetState(TILE_TYPE.Selected);
+                selectedArea.Add(next);
+                EnableCheck(next.transform.position.To2DInt());
+                continue;
+            }
+            break;            
+        }
+        if (selectedArea.Count == 0)
+        {
+            ReMove();
+            return false;
+        }        
+        return true;
+    }
+    public Coroutine MonsterMove()
+    {
+        return StartCoroutine(CharacterMovement(false));
+    }
+
+
+
     #region MoveSelectBehaviour
 
     private IEnumerator PathSelect()
@@ -67,8 +111,8 @@ public class CharacterMove : Singleton<CharacterMove>
         {
             if (moveCount > 0)
                 PathClick();
-            if (selectedArea.Count > 0 & !confirmUI.gameObject.activeSelf)
-                DoMoveWindowActive();
+            if (selectedArea.Count > 0 & !ActionSelectUI.Instance.buttons[1].interactable)
+                DoMoveActivation();
             yield return null;
         }
     }
@@ -101,18 +145,20 @@ public class CharacterMove : Singleton<CharacterMove>
         selectedArea.Remove(lastSelectedView);
         Vector2Int targetCood = Vector2Int.zero;
         if (selectedArea.Count == 0)
+        {
+            ActionSelectUI.Instance.buttons[1].interactable = false;
+            ActionSelectUI.Instance.moveAction = null;
             targetCood = curCharacter.transform.position.To2DInt();
+        }          
         else
             targetCood = selectedArea.Last().transform.position.To2DInt();
         EnableCheck(targetCood);
     }
 
-    private void DoMoveWindowActive()
+    private void DoMoveActivation()
     {
-        confirmUI.yesClickAction = () => { StopCoroutine(pathSelect); StartCoroutine(CharacterMovement()); confirmUI.gameObject.SetActive(false); };
-        confirmUI.transform.position = curCharacter.transform.position;
-        confirmUI.transform.rotation = Camera.main.transform.rotation;
-        confirmUI.gameObject.SetActive(true);
+        ActionSelectUI.Instance.moveAction = () => { StopCoroutine(pathSelect); StartCoroutine(CharacterMovement()); ActionSelectUI.Instance.buttons[1].interactable = false; };
+        ActionSelectUI.Instance.buttons[1].interactable = true;
     }
 
 
@@ -123,7 +169,8 @@ public class CharacterMove : Singleton<CharacterMove>
     #region CharacterMoveBehaviour
 
 
-    private IEnumerator CharacterMovement()
+
+    private IEnumerator CharacterMovement(bool isPlayer = true)
     {
         AreaDisable();
 
@@ -170,10 +217,10 @@ public class CharacterMove : Singleton<CharacterMove>
             if ((characterTransform.forward + characterTransform.position).To2DInt() != targetPosition.To2DInt())
                 yield return characterTransform.DOLookAt(new Vector3(targetPosition.x, characterTransform.position.y, targetPosition.z), 0.3f).WaitForCompletion();
 
-            yield return characterTransform.DOPath(wayPoints, moveSpeed, pathType).SetEase(Ease.Linear).OnComplete(() => 
+            yield return characterTransform.DOPath(wayPoints, moveSpeed, pathType).SetEase(Ease.Linear).OnComplete(() =>
             {
                 isPass = false;
-                prevPosition = targetPosition; 
+                prevPosition = targetPosition;
             }).WaitForCompletion();
         }
         chrAnimator.SetInteger(animatorParam, 0);
@@ -183,7 +230,7 @@ public class CharacterMove : Singleton<CharacterMove>
         field.Cube(endPosition).type = CUBE_TYPE.OnCharacter;
 
         curCharacter.actionable[1] = false;
-        InputManager.Instance.InputReset();
+        InputManager.Instance.InputReset(isPlayer);
         ReMove();
         pathSelect = null;
     }

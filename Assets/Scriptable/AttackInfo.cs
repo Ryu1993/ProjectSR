@@ -4,11 +4,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-[CreateAssetMenu(menuName ="Test")]
+[CreateAssetMenu(menuName ="Attack")]
 public class AttackInfo : ScriptableObject
 {
-    public bool targetOnly;
     
+    public new string name;
+    public bool targetOnly;
     [BoxGroup("SelectInfo")] public int selectRange;
     [BoxGroup("SelectInfo")] public bool selectHeightAllow;
     [BoxGroup("SelectInfo")] public CUBE_TYPE[] selectCubeMask;
@@ -18,7 +19,6 @@ public class AttackInfo : ScriptableObject
     [BoxGroup("AttackInfo")] public bool attakcHeightAllow;
     [BoxGroup("AttackInfo")] public CUBE_TYPE[] attackCubeMask;
     [BoxGroup("AttackInfo")] public FIELD_SHAPE attackShape;
-
     public AssetReferenceT<AnimationClip> attackMotion;
     public AssetReferenceT<GameObject> attackEffect;
 

@@ -13,6 +13,24 @@ public static class ExtencionMethod
 
     public static Vector2Int To2DInt(this Vector3Int vector) => new Vector2Int(vector.x, vector.z);
 
+    public static bool CurState(this Animator animator,int hash)
+    {
+        return animator.GetCurrentAnimatorStateInfo(0).shortNameHash == hash;
+    }
+    public static bool CurStateProgress(this Animator animator,int hash,float progress,bool updown = true)
+    {
+        AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
+        if(CurState(animator,hash))
+        {
+            if (updown)
+                return info.normalizedTime > progress;
+            else
+                return info.normalizedTime < progress;
+        }
+        return false;
+    }
+
+
     public static void LoopDictionaryValue<T1,T2>(this Dictionary<T1,T2> dic,UnityAction<T2> action)
     {
         foreach (KeyValuePair<T1, T2> pair in dic)

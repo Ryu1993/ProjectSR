@@ -11,38 +11,20 @@ public abstract class CurveMotionPlayer : MotionPlayer
     protected List<Vector3Int> wayObstacle;
     protected ParticleSystem _diffusionParitcle;
     protected ParticleSystem _trailParticle;
-    protected ParticleSystem diffusionParitcle
-    {
-        get
-        {
-            if (_diffusionParitcle == null)
-                effect.transform.GetChild(1).TryGetComponent(out _diffusionParitcle);
-            return _diffusionParitcle;
-        }
-    }
-    protected ParticleSystem trailParticle
-    {
-        get
-        {
-            if (_trailParticle == null)
-                effect.transform.GetChild(0).TryGetComponent(out _trailParticle);
-            return _trailParticle;
-        }
-    }
-
-
-    public override void Play(Animator order, Vector3 target, Action attackAction)
+    public override YieldInstruction Play(Animator order, Vector3 target, Action attackAction)
     {
         AnimatorSet(order);
         WayPointSet(order.transform.position, target);
-        PlayAlongPath(attackAction);
+        return PlayerMotionManager.Instance.StartCoroutine(PlayAlongPath(attackAction));
     }
 
     protected void WayPointSet(Vector3 orderPos,Vector3 target)
     {
         Vector3Int targetInt = target.ToInt();
         Vector3Int maxHeight = Vector3Int.zero;
-        trailParticle.transform.position = orderPos + Vector3.up;
+        trailParticle.transform.position = orderPos;
+        trailParticle.transform.LookAt(target);
+        trailParticle.transform.position += trailParticle.transform.forward * 0.5f;
         diffusionParitcle.transform.position = target;
         ways[0] = target;
         wayObstacle = CubeCheck.CubeRaySurface(orderPos, target);
@@ -64,8 +46,27 @@ public abstract class CurveMotionPlayer : MotionPlayer
         }          
     }
 
-    protected abstract void PlayAlongPath(Action action);
+    protected abstract IEnumerator PlayAlongPath(Action action);
 
 
-
+    #region Property
+    protected ParticleSystem diffusionParitcle
+    {
+        get
+        {
+            if (_diffusionParitcle == null)
+                effect.transform.GetChild(1).TryGetComponent(out _diffusionParitcle);
+            return _diffusionParitcle;
+        }
+    }
+    protected ParticleSystem trailParticle
+    {
+        get
+        {
+            if (_trailParticle == null)
+                effect.transform.GetChild(0).TryGetComponent(out _trailParticle);
+            return _trailParticle;
+        }
+    }
+    #endregion
 }

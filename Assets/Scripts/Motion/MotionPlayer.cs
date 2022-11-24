@@ -7,21 +7,53 @@ public abstract class MotionPlayer
 {
     public GameObject effect;
     public AnimationClip motionClip;
-    public AnimatorOverrideController overrideController { get { return PlayerMotionManager.Instance.overrideController; } }
-    public int animation { get { return PlayerMotionManager.Instance.parameterAnimation; } }
-    public abstract void Play(Animator order,Vector3 target,Action attackAction);
+    public AnimatorOverrideController overrideController;
+    public KeyValuePair<AnimationClip, AnimationClip> motionClipPair;
+    protected WaitWhile _effectDelay;
+    protected WaitUntil _animationDelay;
+    protected ParticleSystem _particleEffect;
+    protected Animator targetAniamtor;
+
+    public abstract YieldInstruction Play(Animator order,Vector3 target,Action attackAction);
 
     public void AnimatorSet(Animator order)
     {
-        KeyValuePair<AnimationClip, AnimationClip> motionClipPair = new KeyValuePair<AnimationClip, AnimationClip>(PlayerMotionManager.Instance.originalAttack, motionClip);
+        targetAniamtor = order;
         PlayerMotionManager.Instance.controllerClips[PlayerMotionManager.Instance.clipsIndex] = motionClipPair;
         overrideController.ApplyOverrides(PlayerMotionManager.Instance.controllerClips);
-
-
         order.runtimeAnimatorController = overrideController;
-        order.SetInteger(animation, 2);
+        order.SetInteger(AnimationHash.animation, 2);
         order.Update(0);
-        order.SetInteger(animation, 0);
-        PlayerMotionManager.Instance.originalAttack = motionClip;
+        order.SetInteger(AnimationHash.animation, 0);
     }
+
+    #region Property  
+    protected virtual WaitUntil animationDelay
+    {
+        get
+        {
+            if (_animationDelay == null)
+                _animationDelay = new WaitUntil(()=>targetAniamtor.CurStateProgress(AnimationHash.attack,0.6f));
+            return _animationDelay;
+        }
+    }
+    protected virtual WaitWhile effectDelay
+    {
+        get
+        {
+            if (_effectDelay == null)
+                _effectDelay = new WaitWhile(() => particleEffect.isPlaying);
+            return _effectDelay;
+        }
+    }
+    protected virtual ParticleSystem particleEffect
+    {
+        get
+        {
+            if (_particleEffect == null)
+                effect.TryGetComponent(out _particleEffect);
+            return _particleEffect;
+        }
+    }
+    #endregion
 }
