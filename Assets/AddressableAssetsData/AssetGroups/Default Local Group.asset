@@ -80,10 +80,6 @@ MonoBehaviour:
     m_Address: AreaTile
     m_ReadOnly: 0
     m_SerializedLabels: []
-  - m_GUID: 316f89cc0d739e6469c2394ba1025b77
-    m_Address: AnimatinoClip/Shoot
-    m_ReadOnly: 0
-    m_SerializedLabels: []
   - m_GUID: 34548ea2a38b3bd459a2704b25c62bd6
     m_Address: Assets/Prefabs/Effect/FireBall.prefab
     m_ReadOnly: 0
