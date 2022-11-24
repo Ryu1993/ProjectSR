@@ -7,6 +7,7 @@ using Random = UnityEngine.Random;
 using Unity.VisualScripting;
 using System.Drawing;
 using JetBrains.Annotations;
+using System.Collections;
 
 public enum CUBE_TYPE { Air,Null,Ground,Bed,Water,Out,Obstacle,OnCharacter}
 public enum DIRECTION
@@ -55,7 +56,7 @@ public class FieldGenerator : Singleton<FieldGenerator>
     [HideInInspector] public List<Vector3Int> groundList = new List<Vector3Int>();
     [HideInInspector] public List<Vector3Int> waterList = new List<Vector3Int>();
     [HideInInspector] public Cube[,,] cubes;
-    public FieldInfo field;
+    public FieldInfo fieldInfo;
     private Cube outOfRange = new Cube(CUBE_TYPE.Out);
     private Vector3Int[] side = new Vector3Int[]
     {
@@ -92,17 +93,10 @@ public class FieldGenerator : Singleton<FieldGenerator>
     }
 
 
-    private void Awake()
-    {
-        GenerateField(field);
-    }
-
-
-
-
 
     public void GenerateField(FieldInfo fieldInfo)
     {
+        
         fieldInfo.FieldSet();
         cubes = new Cube[size.x, size.y+1, size.z];
         Vector3Int[] zeroFloor = new Vector3Int[size.x * size.z];
@@ -129,7 +123,7 @@ public class FieldGenerator : Singleton<FieldGenerator>
 
         SurfaceListSet();
         ////////////////////////////////////////////////////////////
-
+        
         ////////////////////////큐브 생성////////////////////////////
 
         AllCube((x, y, z) =>CreateCube(x, y, z));
@@ -210,9 +204,7 @@ public class FieldGenerator : Singleton<FieldGenerator>
     #endregion
 
     #region RiverCreator
-    /// <summary>
-    /// 다익스트라 기반 강 지형 생성 메서드
-    /// </summary>
+    //BFS방식으로 강 지형 생성
     internal void RiverCreate()
     {
         DIRECTION[] direction = Enum.GetValues(typeof(DIRECTION)) as DIRECTION[];
@@ -401,7 +393,7 @@ public class FieldGenerator : Singleton<FieldGenerator>
             targetCoord.y++;
             if (Cube(targetCoord).type == CUBE_TYPE.Out) continue;
             Cube(targetCoord).type = CUBE_TYPE.Obstacle;
-            RandomAddressable.Instantiate(field.tree, (Vector3)targetCoord+transform.position, Quaternion.identity, transform);
+            RandomAddressable.Instantiate(fieldInfo.tree, (Vector3)targetCoord+transform.position, Quaternion.identity, transform);
         }
     }
 
@@ -444,7 +436,7 @@ public class FieldGenerator : Singleton<FieldGenerator>
         Cube cube = Cube(coord);
 
         if(cube.type!=CUBE_TYPE.Air)
-            if (field.field.TryGetValue(cube.type, out AssetLabelReference target))
+            if (fieldInfo.field.TryGetValue(cube.type, out AssetLabelReference target))
             {
                 Vector3 point = transform.position + coord;
                 if (cube.type == CUBE_TYPE.Water)

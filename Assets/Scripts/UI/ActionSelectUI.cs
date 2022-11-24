@@ -33,9 +33,6 @@ public class ActionSelectUI : Singleton<ActionSelectUI>
     }
     public void SelectBoxCancle()
     {
-        curCharacter = null;
-        foreach (Button button in buttons)
-            button.interactable = true;
         buttonGroup.gameObject.SetActive(false);
     }
 

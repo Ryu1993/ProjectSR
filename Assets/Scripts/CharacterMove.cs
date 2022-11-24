@@ -59,33 +59,26 @@ public class CharacterMove : Singleton<CharacterMove>
 
     public bool MonsterMoveCheck(Monster monster,Vector3 target,int movePoint)
     {
-        Vector2Int target2D = target.To2DInt();
         AreaView next = null;   
         CreateMoveField(monster);
         EnableCheck(monster.transform.position.To2DInt());
         for(int i =0; i<movePoint;i++)
         {
-            bool isNextable = false;
-            float distance = 100;
-            foreach (AreaView nextArea in enableArea)
-            {
-                float checkDistance = Vector2Int.Distance(target2D, nextArea.transform.position.To2DInt());
-                if(checkDistance <=distance)
-                {
-                    next = nextArea;
-                    distance = checkDistance;
-                    isNextable = true;
-                }
-            }
+            if (enableArea.Count == 0)
+                break;
+            Span<float> checkDistance = stackalloc float[enableArea.Count];
+            for (int j=0; j<enableArea.Count; j++)
+                checkDistance[j] = Vector3.Distance(target, enableArea[j].transform.position);
+            float distance = checkDistance[0];
+            for(int j =0;j<checkDistance.Length;j++)
+                if (distance >= checkDistance[j])
+                    next = enableArea[j];
+            next.SetState(TILE_TYPE.Selected);
+            selectedArea.Add(next);
             enableArea.Clear();
-            if (isNextable)
-            {
-                next.SetState(TILE_TYPE.Selected);
-                selectedArea.Add(next);
-                EnableCheck(next.transform.position.To2DInt());
-                continue;
-            }
-            break;            
+            EnableCheck(next.transform.position.To2DInt());
+            if (distance < 1.5f)
+                break;
         }
         if (selectedArea.Count == 0)
         {
@@ -94,6 +87,7 @@ public class CharacterMove : Singleton<CharacterMove>
         }        
         return true;
     }
+
     public Coroutine MonsterMove()
     {
         return StartCoroutine(CharacterMovement(false));
@@ -224,6 +218,7 @@ public class CharacterMove : Singleton<CharacterMove>
             }).WaitForCompletion();
         }
         chrAnimator.SetInteger(animatorParam, 0);
+        chrAnimator.Update(0);
 
         Vector3Int endPosition = prevPosition.ToInt();
         field.CubeDataCall(endPosition).onChracter = curCharacter;

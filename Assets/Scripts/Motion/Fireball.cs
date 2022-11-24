@@ -13,11 +13,11 @@ public class Fireball : CurveMotionPlayer
 
     protected override IEnumerator PlayAlongPath(Action action)
     {
-        yield return animationDelay;
+        //yield return animationDelay;
         //trailParticle.transform.position = trailParticle.transform.forward + Vector3.up;
         trailParticle.gameObject.SetActive(true);
         trailParticle.Play();
-        yield return trailParticle.transform.DOPath(ways, 2f, PathType.CubicBezier).SetEase(Ease.OutExpo).OnComplete(() =>
+        yield return trailParticle.transform.DOPath(ways, 2f, PathType.CubicBezier).SetEase(Ease.InExpo).OnComplete(() =>
         {
             trailParticle.gameObject.SetActive(false);
             diffusionParitcle.Play();
@@ -30,7 +30,7 @@ public class Fireball : CurveMotionPlayer
         get
         {
             if (_animationDelay == null)
-                _animationDelay = new WaitUntil(() => targetAniamtor.CurStateProgress(AnimationHash.attack, 0.3f));
+                _animationDelay = new WaitUntil(() => targetAniamtor.CurStateProgress(AnimationHash.attack, 0.5f));
             return _animationDelay;
         }
     }

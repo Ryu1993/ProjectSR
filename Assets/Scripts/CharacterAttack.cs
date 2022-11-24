@@ -26,6 +26,7 @@ public class CharacterAttack : Singleton<CharacterAttack>
 
     public void AttackAreaCreate(Character character,AttackInfo info,bool isPlayer = true)
     {
+        ActionSelectUI.Instance.SelectBoxCancle();
         this.character = character;
         transform.position = character.transform.position;
         attack = info;
@@ -41,7 +42,7 @@ public class CharacterAttack : Singleton<CharacterAttack>
         character = null;
         attack = null;
         AreaFieldClear(selectRangeList);
-        AreaFieldClear(attackRangeList);      
+        AreaFieldClear(attackRangeList);
     }
 
     public bool AttackableCheck(Monster monster,AttackInfo info,Character target)
@@ -202,16 +203,46 @@ public class CharacterAttack : Singleton<CharacterAttack>
 
     private YieldInstruction AttackAction(Vector3 target, bool isPlayer = true)
     {
+        character.transform.LookAt(new Vector3(target.x, character.transform.position.y, target.z));
+        Dictionary<AttackInfo, MotionPlayer> motionDic = null;
+        if (isPlayer)
+            motionDic = PlayerMotionManager.Instance.attackMotions;
+        else
+            motionDic = PlayerMotionManager.Instance.monsterMotions;
         AreaFieldClear(selectRangeList);
-        return PlayerMotionManager.Instance.attackMotions[attack].Play(character.Animator, target, () =>
+        return motionDic[attack].Play(character.Animator, target, () =>
         {
             print("공격"); // 이부분 커스텀
+            attackRangeList.LoopDictionaryKey((key) => 
+            { 
+                if(field.SurfaceState(key) == CUBE_TYPE.OnCharacter)
+                {
+                    field.Surface(key, out Vector3Int target);
+                    Character targetChar = field.CubeDataCall(target).onChracter;
+                    Monster monster =  targetChar as Monster;
+                    if (isPlayer)
+                    {                     
+                        if (monster != null)
+                            targetChar.Animator.SetInteger(AnimationHash.animation, 8);
+                    }
+                    else
+                    {
+                        if(monster == null)
+                            targetChar.Animator.SetInteger(AnimationHash.animation, 8);
+
+                    }
+                    targetChar.Animator.Update(0);
+                    targetChar.Animator.SetInteger(AnimationHash.animation,0);
+                }        
+            });
+
 
             AreaFieldClear(attackRangeList);
             rangeViewProgress = null;
             character.actionable[0] = false;
             InputManager.Instance.InputReset(isPlayer);
         });
+
     }
 
 

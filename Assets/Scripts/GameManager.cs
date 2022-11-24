@@ -22,27 +22,28 @@ public class GameManager : Singleton<GameManager>
 
     public IEnumerator Start()
     {
+        Loading.Instance.CallLoadingUI();
         field = FieldGenerator.Instance;
+        field.GenerateField(field.fieldInfo);
+        Loading.Instance.ProgressLoadingUI(0.3f);
+        yield return null;
         party.Clear();
         enemy.Clear();
         int maxProgressCount = playerCharacter.Length + enemies.Length;
         progressCount = 0;
         CharacterInstantiate(playerCharacter,party);
         CharacterInstantiate(enemies, enemy);
+        Loading.Instance.ProgressLoadingUI(0.6f);
         yield return new WaitUntil(() => progressCount == maxProgressCount);
         field.PointSet(out Vector2Int partySpot, out Vector2Int enemySpot);
         Span<Vector3Int> spotAround = stackalloc Vector3Int[9];
         CharacterPositionSet(partySpot, ref spotAround, party);
         CharacterPositionSet(enemySpot,ref spotAround, enemy);
-        for(int i= 0; i<party.Count;i++)
-        {
-
-            CharacterUI ui = Instantiate(charUI, charUICanvas);
-            ui.CharacterMatch(party[i], playerCharacter[i].iconSprite);
-            CharacterUIManager.Instance.UIAdd(ui);
-        }
         PlayerMotionManager.Instance.SetAttackMotion();
+        GetComponent<TurnManager>().Setting(enemy,party);
         isReady = true;
+        Loading.Instance.ProgressLoadingUI(1f);
+        Loading.Instance.ReturnLoadingUI();
     }
 
     private void CharacterInstantiate(CharacterInfo[] infos,List<Character> targetList)
@@ -56,6 +57,12 @@ public class GameManager : Singleton<GameManager>
                 character.CharacterSetting(info);
                 targetList.Add(character);
                 progressCount++;
+                if(targetList == party)
+                {
+                    CharacterUI ui = Instantiate(charUI, charUICanvas);
+                    ui.CharacterMatch(character, info.iconSprite);
+                    CharacterUIManager.Instance.UIAdd(ui);
+                }
             };
         }
     }
@@ -80,32 +87,6 @@ public class GameManager : Singleton<GameManager>
         }
     }
 
-    public IEnumerator EnemyTurn()
-    {
-        foreach(var e in enemy)
-        {
-            Monster mon = e as Monster;
-            yield return StartCoroutine(mon.MonsterAction());
-        }
-    }
 
-    bool turnSwith = false;
-
-    public void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Q)&!turnSwith)
-            StartCoroutine(EnemyTurn());
-        if(Input.GetKeyDown(KeyCode.W)&turnSwith)
-        {        
-            foreach (var c in party)
-                c.TurnReset();
-            CharacterUIManager.Instance.UIinteractionSwitch(true);
-        }
-        if(Input.GetKeyDown(KeyCode.E))
-        {
-            turnSwith = !turnSwith;
-        }
-
-    }
 
 }

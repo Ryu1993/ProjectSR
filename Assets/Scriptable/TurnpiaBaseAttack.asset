@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4cbf2cec51dd4f3458780115a6fc7a2c, type: 3}
+  m_Name: TurnpiaBaseAttack
+  m_EditorClassIdentifier: 
+  name: MonsterMotionPlayer
+  targetOnly: 1
+  selectRange: 1
+  selectHeightAllow: 0
+  selectCubeMask: 
+  selectShape: 2
+  attakcRange: 0
+  attakcHeightAllow: 0
+  attackCubeMask: 
+  attackShape: 0
+  attackMotion:
+    m_AssetGUID: cf39517cb36b4dd44b943e57f4e420e2
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  attackEffect:
+    m_AssetGUID: 34548ea2a38b3bd459a2704b25c62bd6
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0

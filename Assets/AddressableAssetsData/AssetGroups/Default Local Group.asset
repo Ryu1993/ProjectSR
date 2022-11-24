@@ -108,6 +108,18 @@ MonoBehaviour:
     m_Address: Assets/Prefabs/Effect/GroundSpike.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
+  - m_GUID: 4f62c49cd1853fa428f1e3ddd7af3e36
+    m_Address: Assets/Prefabs/Character/Monster/Turnipa_Sweet 1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 75c337806b1327746817e272e69e0114
+    m_Address: Assets/Prefabs/Character/Monster/Turnipa_Bitter 1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 8b2ba91a0ea1fdb448ab317a111ba567
+    m_Address: Assets/Prefabs/Character/Monster/Turnipa_Sour 1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 5cfa9f7d18b001145b33578bc383e564, type: 2}
   m_SchemaSet:

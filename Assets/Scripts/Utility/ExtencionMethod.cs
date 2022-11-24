@@ -15,7 +15,8 @@ public static class ExtencionMethod
 
     public static bool CurState(this Animator animator,int hash)
     {
-        return animator.GetCurrentAnimatorStateInfo(0).shortNameHash == hash;
+        AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
+        return info.shortNameHash == hash | info.fullPathHash == hash | info.tagHash == hash;
     }
     public static bool CurStateProgress(this Animator animator,int hash,float progress,bool updown = true)
     {

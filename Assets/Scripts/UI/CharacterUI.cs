@@ -16,14 +16,14 @@ public class CharacterUI : MonoBehaviour
     {
         CharacterUIManager.Instance.UIinteractionSwitch(false);
         CameraManager.Instance.CharacterFocus(curCharacter);
-
         ActionSelectUI.Instance.SelectBoxActive(curCharacter);
-
+        TurnManager.Instance.ButtonSwitch(false);
         InputManager.Instance.CancleBehaviour.Push(()=> 
         {
             ActionSelectUI.Instance.SelectBoxCancle();
             CameraManager.Instance.CharacterFocusOut();
             CharacterUIManager.Instance.UIinteractionSwitch(true);
+            TurnManager.Instance.ButtonSwitch(true);
         });
     }
     

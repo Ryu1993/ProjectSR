@@ -17,7 +17,7 @@ public class CameraManager : Singleton<CameraManager>
     private void Start()
     {
         Vector3 target = field.size;
-        fieldVC.transform.position = new Vector3(target.x / 2, 20, target.z / 2);
+
         mainCam = Camera.main;
     }
 

@@ -16,7 +16,7 @@ public abstract class MotionPlayer
 
     public abstract YieldInstruction Play(Animator order,Vector3 target,Action attackAction);
 
-    public void AnimatorSet(Animator order)
+    public virtual void AnimatorSet(Animator order)
     {
         targetAniamtor = order;
         PlayerMotionManager.Instance.controllerClips[PlayerMotionManager.Instance.clipsIndex] = motionClipPair;

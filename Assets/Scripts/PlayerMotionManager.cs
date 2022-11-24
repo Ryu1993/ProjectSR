@@ -14,36 +14,31 @@ public class PlayerMotionManager : Singleton<PlayerMotionManager>
 {   
     public List<KeyValuePair<AnimationClip, AnimationClip>> controllerClips = new List<KeyValuePair<AnimationClip, AnimationClip>>();
     public Dictionary<AttackInfo, MotionPlayer> attackMotions = new Dictionary<AttackInfo, MotionPlayer>();
+    public Dictionary<AttackInfo, MotionPlayer> monsterMotions = new Dictionary<AttackInfo, MotionPlayer>();
     public AnimatorOverrideController overrideController;
     public RuntimeAnimatorController originalController;
     public AnimationClip originalAttack;
     public int clipsIndex { get; private set; }
 
 
-
-    private void Awake()
+    public void SetAttackMotion()
     {
-        SetAttackMotion();
-        foreach(var clip in originalController.animationClips)
-            controllerClips.Add(new KeyValuePair<AnimationClip,AnimationClip>(clip, clip));
+        MotionSetByCharacter(GameManager.Instance.party,attackMotions ,() => print("로딩"));
+        MotionSetByCharacter(GameManager.Instance.enemy,monsterMotions, () => print("로딩"));
+        foreach (var clip in originalController.animationClips)
+            controllerClips.Add(new KeyValuePair<AnimationClip, AnimationClip>(clip, clip));
         overrideController.ApplyOverrides(controllerClips);
-        for(int i=0; i<controllerClips.Count;i++)
+        for (int i = 0; i < controllerClips.Count; i++)
         {
             if (controllerClips[i].Key == originalAttack)
                 clipsIndex = i;
         }
     }
-
-    public void SetAttackMotion()
-    {
-        MotionSetByCharacter(GameManager.Instance.party, () => print("로딩"));
-        MotionSetByCharacter(GameManager.Instance.enemy, () => print("로딩"));
-    }
-    private void MotionSetByCharacter(List<Character> characters,Action callback)
+    private void MotionSetByCharacter(List<Character> characters, Dictionary<AttackInfo, MotionPlayer> dictionary,Action callback)
     {
         foreach (Character character in characters)
             foreach (var info in character.attackList)
-                if (!attackMotions.ContainsKey(info))
+                if (!dictionary.ContainsKey(info))
                 {
                     MotionPlayer player = Activator.CreateInstance(Type.GetType(info.name)) as MotionPlayer;
                     player.overrideController = overrideController;
@@ -55,7 +50,7 @@ public class PlayerMotionManager : Singleton<PlayerMotionManager>
                     info.attackEffect.InstantiateAsync(Vector3.zero, Quaternion.identity).Completed += 
                         (handle) => { player.effect = handle.Result;
                                       callback.Invoke(); };
-                    attackMotions.Add(info, player);
+                    dictionary.Add(info, player);
                 }
     }
 
