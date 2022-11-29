@@ -12,20 +12,13 @@ public enum TILE_TYPE { Default =0, Enable = 1, Disable = 2,Selected = 3,Passabl
 [RequireComponent(typeof(MeshRenderer))]
 public class AreaView : MonoBehaviour,IPoolingable
 {
-    [SerializeField] private Color[] colors;
-    private MeshFilter meshFilter;
-    private MeshRenderer meshRenderer;
+    [SerializeField] private Material[] materials;
+    [SerializeField]private MeshRenderer meshRenderer;
     public TILE_TYPE curType;
     public TILE_TYPE curState;
 
     public ObjectPool home { get; set; }
 
-    private void Awake()
-    {
-        meshFilter = GetComponent<MeshFilter>();
-        meshRenderer = GetComponent<MeshRenderer>();
-
-    }
     private void OnEnable()
     {
         SetColor(TILE_TYPE.Default, ref curType);
@@ -43,12 +36,8 @@ public class AreaView : MonoBehaviour,IPoolingable
     private void SetColor(TILE_TYPE type,ref TILE_TYPE cur)
     {
         cur = type;
-        Color[] colors = new Color[meshFilter.mesh.vertexCount];
-        for (int i = 0; i < colors.Length; i++)
-            colors[i] = this.colors[(int)type];
-        meshFilter.mesh.SetColors(colors);
+        meshRenderer.sharedMaterial = materials[(int)type];
     }
-
 
     public void SetType(TILE_TYPE type) => SetColor(type,ref curType);
     public void SetState(TILE_TYPE type) => SetColor(type, ref curState);

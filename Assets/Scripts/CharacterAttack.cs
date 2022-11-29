@@ -144,9 +144,12 @@ public class CharacterAttack : Singleton<CharacterAttack>
         if(attack.attakcRange==0)
         {
             AreaFieldClear(attackRangeList);
+            //if (!attack.attakcHeightAllow)
+            //    if (Mathf.RoundToInt(center.transform.position.y) != Mathf.RoundToInt(character.transform.position.y))
+            //        return;
             field.Surface(centerPosition, out Vector3 target);
-            center = AreaViewManager.Instance.CallAreaView(target+new Vector3(0,0.1f,0), null);
-            attackRangeList.Add(centerPosition,center);
+            center = AreaViewManager.Instance.CallAreaView(target + new Vector3(0, 0.1f, 0), null);
+            attackRangeList.Add(centerPosition, center);
         }
         else
         {

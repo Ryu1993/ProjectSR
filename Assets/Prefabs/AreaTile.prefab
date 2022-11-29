@@ -56,8 +56,8 @@ MeshRenderer:
   m_DynamicOccludee: 0
   m_StaticShadowCaster: 0
   m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
   m_RenderingLayerMask: 1
@@ -97,13 +97,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 512bd86bb1190d14b9b3b51af9f7e881, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  colors:
-  - {r: 0.2264151, g: 0.2264151, b: 0.2264151, a: 0}
-  - {r: 0.16470586, g: 0.32933733, b: 0.99215686, a: 0.49019608}
-  - {r: 1, g: 0, b: 0, a: 0.3529412}
-  - {r: 0.3443776, g: 0.117647044, b: 0.99215686, a: 0.49019608}
-  - {r: 0.16862747, g: 0.972549, b: 0.87317204, a: 0.3529412}
-  - {r: 0.5528555, g: 0.990566, b: 0.53733534, a: 0.3529412}
+  materials:
+  - {fileID: 2100000, guid: a2dc406b5b5449246842487b12e282e9, type: 2}
+  - {fileID: 2100000, guid: 1d73c69493d02594aa008d82c3b29a37, type: 2}
+  - {fileID: 2100000, guid: 8a48fd6d10ad22344af5d98b9c16f618, type: 2}
+  - {fileID: 2100000, guid: 87d4aafcc2456b4479fe16404ed7f707, type: 2}
+  - {fileID: 2100000, guid: d193c5c3bf3344640a05203d6f0f34bd, type: 2}
+  - {fileID: 2100000, guid: dce7a22e862c1a94b99893590553c6d5, type: 2}
+  meshRenderer: {fileID: 5305948098419863634}
   curType: 0
   curState: 0
 --- !u!64 &1296450766846914957

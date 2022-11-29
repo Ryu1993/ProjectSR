@@ -68,7 +68,7 @@ public class CharacterMove : Singleton<CharacterMove>
                 break;
             Span<float> checkDistance = stackalloc float[enableArea.Count];
             for (int j=0; j<enableArea.Count; j++)
-                checkDistance[j] = Vector3.Distance(target, enableArea[j].transform.position);
+                checkDistance[j] = Vector3.Distance(target, enableArea[j].transform.position)+Vector3.Distance(monster.transform.position, enableArea[j].transform.position);
             float distance = checkDistance[0];
             for(int j =0;j<checkDistance.Length;j++)
                 if (distance >= checkDistance[j])

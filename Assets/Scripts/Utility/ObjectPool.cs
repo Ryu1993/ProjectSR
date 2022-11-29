@@ -24,8 +24,7 @@ public class ObjectPool
         m_active = active;
         PoolAdd(start);
     }
-
-    //baseObj가 Addressable로 로드했을 경우 메모리 관리를 위한 AsyncOperationHandle 보관용 메서드
+    //baseObj가 Addressable로 로드했을 경우 ObjectPool을 런타임중에 해제할때 리소스 언로드를 위하여 저장
     public void HandleSet(ref AsyncOperationHandle<GameObject> handle)
     {
         m_baseObjHandle = handle;
@@ -55,24 +54,16 @@ public class ObjectPool
     public Transform Call(Vector3 position,Quaternion rotate,Transform parent,bool worldPositonStay,bool isMove)
     {
         if(m_pool.Count == 0)
-        {
             PoolAdd(m_add);
-        }
-        m_pool.Pop().TryGetComponent(out Transform Objtransform);
+        m_pool.Pop().TryGetComponent(out Transform objectTransform);
         if(isMove)
-        {
-            Objtransform.position = position;
-        }
-        Objtransform.rotation = rotate;
+            objectTransform.position = position;
+        objectTransform.rotation = rotate;
         if(parent!=null)
-        {
-            Objtransform.SetParent(parent, worldPositonStay);
-        }
+            objectTransform.SetParent(parent, worldPositonStay);
         else
-        {
-            Objtransform.SetParent(m_active, false);
-        }
-        return Objtransform;
+            objectTransform.SetParent(m_active, false);
+        return objectTransform;
     }
     public Transform Call(Quaternion rotate) => Call(Vector3.zero, rotate, null, false, false);
     public Transform Call(Transform parent, bool worldPositonStay) => Call(Vector3.zero, Quaternion.identity, parent, worldPositonStay, false);
