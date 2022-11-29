@@ -18,8 +18,9 @@ public abstract class MotionPlayer
 
     public virtual void AnimatorSet(Animator order)
     {
+        PlayerMotionManager manager = PlayerMotionManager.Instance;
         targetAniamtor = order;
-        PlayerMotionManager.Instance.controllerClips[PlayerMotionManager.Instance.clipsIndex] = motionClipPair;
+        manager.controllerClips[manager.clipsIndex] = motionClipPair;
         overrideController.ApplyOverrides(PlayerMotionManager.Instance.controllerClips);
         order.runtimeAnimatorController = overrideController;
         order.SetInteger(AnimationHash.animation, 2);
@@ -33,7 +34,7 @@ public abstract class MotionPlayer
         get
         {
             if (_animationDelay == null)
-                _animationDelay = new WaitUntil(()=>targetAniamtor.CurStateProgress(AnimationHash.attack,0.6f));
+                _animationDelay = new WaitUntil(()=>targetAniamtor.CurStateProgress(AnimationHash.attack)>0.6f);
             return _animationDelay;
         }
     }

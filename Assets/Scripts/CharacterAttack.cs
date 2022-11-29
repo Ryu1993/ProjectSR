@@ -1,9 +1,5 @@
-using DG.Tweening;
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 
 
@@ -68,7 +64,7 @@ public class CharacterAttack : Singleton<CharacterAttack>
     public YieldInstruction MonsterAttack(Character target)
     {
         AreaView center = null;
-        selectRangeList.LoopDictionaryKey((key) =>
+        selectRangeList.LoopDictionary((key) =>
         {
             if (field.SurfaceState(key) == CUBE_TYPE.OnCharacter)
             {
@@ -115,7 +111,7 @@ public class CharacterAttack : Singleton<CharacterAttack>
 
         AreaFieldClear(areaDic);
         AreaViewManager.Instance.CallAreaFieldShape(origin, range, areaDic, shape);
-        areaDic.LoopDictionaryValue((target) =>
+        areaDic.LoopDictionary((target) =>
         {
             if (AreaCheck(origin, target, cubeRayMask, isHeightAllow, isTargetOnly))
                 target.SetType(type);
@@ -197,7 +193,7 @@ public class CharacterAttack : Singleton<CharacterAttack>
 
     private void AreaFieldClear(Dictionary<Vector2Int, AreaView> target)
     {
-        target.LoopDictionaryValue((view) => view.Return());
+        target.LoopDictionary((view) => view.Return());
         target.Clear();
     }
 
@@ -213,7 +209,7 @@ public class CharacterAttack : Singleton<CharacterAttack>
         return motionDic[attack].Play(character.Animator, target, () =>
         {
             print("공격"); // 이부분 커스텀
-            attackRangeList.LoopDictionaryKey((key) => 
+            attackRangeList.LoopDictionary((key) => 
             { 
                 if(field.SurfaceState(key) == CUBE_TYPE.OnCharacter)
                 {

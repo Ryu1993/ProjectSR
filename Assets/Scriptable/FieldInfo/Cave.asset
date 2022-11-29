@@ -10,19 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: eefab3064a0f74e4ba293153f2f96c32, type: 3}
-  m_Name: New Field Info
+  m_Name: Cave
   m_EditorClassIdentifier: 
   cubeData:
   - type: 2
     label:
-      m_LabelString: GrassGround
+      m_LabelString: CaveGround
   - type: 4
     label:
-      m_LabelString: Water
+      m_LabelString: Magma
   - type: 3
     label:
-      m_LabelString: GrassBed
+      m_LabelString: CaveGround
   tree:
-    m_LabelString: Tree
+    m_LabelString: Rock
   stump:
     m_LabelString: Stump

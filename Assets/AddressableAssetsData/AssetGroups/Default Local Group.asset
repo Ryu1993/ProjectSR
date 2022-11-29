@@ -120,6 +120,36 @@ MonoBehaviour:
     m_Address: Assets/Prefabs/Character/Monster/Turnipa_Sour 1.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
+  - m_GUID: d678e9fc1176f6741be8de70cefa5a4e
+    m_Address: Assets/Prefabs/Tree/RockSmallGroupBlue9 1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Rock
+  - m_GUID: 986e2ef5dfccbf74d81d713e3fcd7c25
+    m_Address: Assets/Prefabs/Tree/RockLayered_1 (1) 1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Rock
+  - m_GUID: 410df53ac460df346b2d053d22097c5e
+    m_Address: Assets/Prefabs/Tree/Rock_7 (1) 1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Rock
+  - m_GUID: d245ddd25a2515a4c9da79509b9deec4
+    m_Address: Assets/Prefabs/Tree/RockFlat_1 (1) 1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Rock
+  - m_GUID: 0c7d1689744966945bd210e9effab564
+    m_Address: Assets/Prefabs/Field/Cube_Lava 1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Magma
+  - m_GUID: f9d075ab5d4644c4084540f434167ac4
+    m_Address: Assets/Prefabs/Field/Cube_Rock 1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CaveGround
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 5cfa9f7d18b001145b33578bc383e564, type: 2}
   m_SchemaSet:

@@ -1,12 +1,8 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 using System;
-using Unity.VisualScripting.FullSerializer;
-using UnityEngine.Video;
-using Unity.VisualScripting;
-using UnityEditor.Timeline.Actions;
+
 
 public class Fireball : CurveMotionPlayer
 {
@@ -30,7 +26,7 @@ public class Fireball : CurveMotionPlayer
         get
         {
             if (_animationDelay == null)
-                _animationDelay = new WaitUntil(() => targetAniamtor.CurStateProgress(AnimationHash.attack, 0.5f));
+                _animationDelay = new WaitUntil(() => targetAniamtor.CurStateProgress(AnimationHash.attack)>0.5f);
             return _animationDelay;
         }
     }

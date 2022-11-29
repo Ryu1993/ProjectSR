@@ -8,6 +8,25 @@ using Unity.VisualScripting;
 using System.Drawing;
 using JetBrains.Annotations;
 using System.Collections;
+using UnityEditor;
+
+
+
+[CustomEditor(typeof(FieldGenerator))]
+public class FieldCreate : Editor
+{
+    public override void OnInspectorGUI()
+    {
+        base.OnInspectorGUI();
+        FieldGenerator fieldGenerator = (FieldGenerator)target;
+        if (GUILayout.Button("MapGenerate"))
+            fieldGenerator.GetComponent<FieldGenerator>().GenerateField(fieldGenerator.GetComponent<FieldGenerator>().fieldInfo);
+    }
+
+
+}
+
+
 
 public enum CUBE_TYPE { Air,Null,Ground,Bed,Water,Out,Obstacle,OnCharacter}
 public enum DIRECTION
@@ -45,6 +64,7 @@ public class CubeData
 
 public class FieldGenerator : Singleton<FieldGenerator>
 {
+    [SerializeField] private Transform holder;
     [SerializeField] private int riverCount;
     [SerializeField] private int waterDepth;
     [SerializeField] public Vector3Int size;
@@ -93,10 +113,19 @@ public class FieldGenerator : Singleton<FieldGenerator>
     }
 
 
+    public void FieldReset()
+    {
+        DestroyImmediate(holder.gameObject);
+        holder = new GameObject("holder").transform;
+        surfaceList.Clear();
+        groundList.Clear();
+        waterList.Clear();
+    }
+
 
     public void GenerateField(FieldInfo fieldInfo)
     {
-        
+        FieldReset();
         fieldInfo.FieldSet();
         cubes = new Cube[size.x, size.y+1, size.z];
         Vector3Int[] zeroFloor = new Vector3Int[size.x * size.z];
@@ -137,9 +166,7 @@ public class FieldGenerator : Singleton<FieldGenerator>
 
     #region FloorCreator
 
-    /// <summary>
-    /// 계단 지형 생성 메서드
-    /// </summary>
+    /// <summary> 계단 지형 생성 메서드 </summary>
     /// <param name="baseFloor">베이스 층 </param>
     /// <param name="floorNum">최고 층수</param>
     /// <param name="offset">지형 비율</param>
@@ -169,7 +196,7 @@ public class FieldGenerator : Singleton<FieldGenerator>
     internal bool FloorSet(Vector3Int[] baseFloor,out Vector3Int[] floor, float offset)
     {
         int creatCount = 1;
-        int floorSize =(int)((float)baseFloor.Length * offset);
+        int floorSize =(int)(baseFloor.Length * offset);
         if (floorSize == 0)
         {
             floor = null;
@@ -177,7 +204,7 @@ public class FieldGenerator : Singleton<FieldGenerator>
         }
         floor = new Vector3Int[floorSize];
         floor[0] = baseFloor[Random.Range(0, baseFloor.Length)];
-        while(creatCount <floor.Length)//지형 적합성 체크
+        while(creatCount <floor.Length)
         {
             Vector3Int center = floor[Random.Range(0, creatCount)];
             Shuffle.Array(ref side);
@@ -226,9 +253,7 @@ public class FieldGenerator : Singleton<FieldGenerator>
     }
 
 
-    /// <summary>
-    /// 출발,도착지점 랜덤 매칭
-    /// </summary>
+    /// <summary>출발,도착지점 랜덤 매칭</summary>
     internal Vector3Int SetPoint(DIRECTION direct)
     {
         switch(direct)
@@ -393,7 +418,7 @@ public class FieldGenerator : Singleton<FieldGenerator>
             targetCoord.y++;
             if (Cube(targetCoord).type == CUBE_TYPE.Out) continue;
             Cube(targetCoord).type = CUBE_TYPE.Obstacle;
-            RandomAddressable.Instantiate(fieldInfo.tree, (Vector3)targetCoord+transform.position, Quaternion.identity, transform);
+            RandomAddressable.Instantiate(fieldInfo.tree, (Vector3)targetCoord+transform.position, Quaternion.identity, holder);
         }
     }
 
@@ -441,7 +466,7 @@ public class FieldGenerator : Singleton<FieldGenerator>
                 Vector3 point = transform.position + coord;
                 if (cube.type == CUBE_TYPE.Water)
                     point -= new Vector3(0, 0.3f, 0);
-                RandomAddressable.Instantiate(target, point, Quaternion.identity, transform);//
+                RandomAddressable.Instantiate(target, point, Quaternion.identity, holder);//
             }
     }
 

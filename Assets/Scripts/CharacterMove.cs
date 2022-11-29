@@ -45,7 +45,7 @@ public class CharacterMove : Singleton<CharacterMove>
 
     private void AreaReset()
     {
-        moveField.LoopDictionaryValue((view) => view.Return());
+        moveField.LoopDictionary((view) => view.Return());
         moveField.Clear();
         selectedArea.Clear();
         enableArea.Clear();
@@ -53,7 +53,7 @@ public class CharacterMove : Singleton<CharacterMove>
 
     private void AreaDisable()
     {
-        moveField.LoopDictionaryValue((view) => view.Invisible());
+        moveField.LoopDictionary((view) => view.Invisible());
     }
 
 
@@ -280,7 +280,6 @@ public class CharacterMove : Singleton<CharacterMove>
             (none) => result = true
             );
         return result;
-
     }
 
     #endregion
