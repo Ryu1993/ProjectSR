@@ -261,10 +261,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 733bb701460e590499d6996dc898be5f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fieldSize: {x: 10, y: 5, z: 10}
-  floorOffset: 0.2
+  fieldSize: {x: 15, y: 5, z: 15}
+  floorOffset: 0.5
   floorCount: 2
-  testGo: {fileID: 1133981147424236, guid: ae3e4d73606788a408c6abb086325060, type: 3}
+  floorHeight: 5
+  waterDepth: 2
+  riverCount: 3
+  testBed: {fileID: 1133981147424236, guid: ae3e4d73606788a408c6abb086325060, type: 3}
+  testGround: {fileID: 7011389758965742996, guid: fbceb2ce3ae7ae64ba5311082c2e090a, type: 3}
+  testWater: {fileID: 1379645051613606, guid: f09c3e48c142ab24c87bc26956e53c82, type: 3}
 --- !u!1 &1013504400
 GameObject:
   m_ObjectHideFlags: 0
