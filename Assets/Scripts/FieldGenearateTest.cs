@@ -106,7 +106,7 @@ public class FieldGenearateTest : MonoBehaviour
                     voxels[i][j][k] = new Voxel();
             }
         }
-        voxels.LoopY(0, (zeroFloor) => zeroFloor.type = VoxelType.Bed);
+        VoxelsLoopY(0, (zeroFloorVoxel) => Voxel(zeroFloorVoxel).type = VoxelType.Bed);
     }
 
 
