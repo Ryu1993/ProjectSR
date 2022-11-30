@@ -262,10 +262,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fieldSize: {x: 15, y: 5, z: 15}
-  floorOffset: 0.5
-  floorCount: 2
   floorHeight: 5
-  waterDepth: 2
+  waterDepth: 3
   riverCount: 3
   testBed: {fileID: 1133981147424236, guid: ae3e4d73606788a408c6abb086325060, type: 3}
   testGround: {fileID: 7011389758965742996, guid: fbceb2ce3ae7ae64ba5311082c2e090a, type: 3}

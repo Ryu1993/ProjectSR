@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
@@ -34,4 +35,32 @@ public static class ExtencionMethod
         foreach (KeyValuePair<T1, T2> pair in dic)
             action?.Invoke(pair);
     }
+
+    public static void Loop<T>(this T[][][] array,Action<T> action)
+    {
+        for (int i = 0; i < array.GetLength(0); i++)
+            for (int j = 0; j < array.GetLength(1); j++)
+                for (int k = 0; k < array.GetLength(2); k++)
+                    action.Invoke(array[i][j][k]);                  
+    }
+    public static void LoopY<T>(this T[][][] array,int y,Action<T> action)
+    {
+        for (int i = 0; i < array.GetLength(0); i++)
+            for (int j = 0; j < array.GetLength(2); j++)
+                action.Invoke(array[i][y][j]);
+    }
+
+    public static void LoopXZ<T>(this T[][][] array,Vector2Int coord,Action<T> action)
+    {
+        for (int i = 0; i < array.GetLength(1); i++)
+            action.Invoke(array[coord.x][i][coord.y]);
+    }
+
+    public static T Coord<T>(this T[][][] array,Vector3Int coord)
+    {
+        return array[coord.x][coord.y][coord.z];
+    }
+
+
+
 }
