@@ -18,7 +18,7 @@ public class Character : MonoBehaviour
     protected int hp;
     public UnityAction<float> hpChangeAction;
     public CharacterInfo info;
-
+    public bool isDiagonalMoveAllowed;
 
     public void TurnReset()
     {

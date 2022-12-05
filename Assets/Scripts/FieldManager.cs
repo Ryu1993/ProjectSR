@@ -38,6 +38,7 @@ public class FieldManager : Singleton<FieldManager>
     /// </summary>
     private List<GameObject> sampleGos = new List<GameObject>();
     private List<GameObject> createdGos = new List<GameObject>();
+    private Transform cubeHolder;
     public FieldThema thema;
 
     [HideInInspector]
@@ -283,14 +284,18 @@ public class FieldManager : Singleton<FieldManager>
                 default: 
                     return;
             }
-            createdGos.Add(Instantiate(sampleGo, position, Quaternion.identity));
+            createdGos.Add(Instantiate(sampleGo, position, Quaternion.identity, cubeHolder));
         });
     }
 
     private void FieldReset()
     {
+        if (cubeHolder != null)
+            DestroyImmediate(cubeHolder.gameObject);
+        cubeHolder = new GameObject("FIELD").transform;
         foreach (GameObject go in createdGos)
-            Addressables.Release(go);
+            if(go!=null)
+                Addressables.Release(go);
         foreach (GameObject go in sampleGos)
             Addressables.Release(go);
     }
