@@ -5,35 +5,22 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceLocations;
 
-public class ObjectPoolManager : NonBehaviourSingleton<ObjectPoolManager>
+public class ObjectPoolManager : NonBehaviourSingleton<ObjectPoolManager>,ISetable
 {
     [SerializeField]
     private List<ObjectPool> m_pools = new List<ObjectPool>();
     private Transform m_active;
     private Transform m_inactive;
-    //private static ObjectPoolManager instance;
-    //public static ObjectPoolManager Instance
-    //{
-    //    get
-    //    {
-    //        if(instance == null)
-    //            instance = new ObjectPoolManager();
-    //        return instance;     
-    //    }
-    //}
-    private void InactiveSet()
+
+    public void Set()
     {
-        if(m_active == null)
-        {
-            m_active = new GameObject("Active").transform;
-            m_inactive = new GameObject("InActive").transform;
-            m_inactive.gameObject.SetActive(false);
-        }
+        m_active = new GameObject("Active").transform;
+        m_inactive = new GameObject("InActive").transform;
+        m_inactive.gameObject.SetActive(false);
     }
 
     public ObjectPool PoolRequest(GameObject baseObj,int start,int add)
     {
-        InactiveSet();
         if(!baseObj.TryGetComponent(out IPoolingable temp)) //대상이 오브젝트풀 인터페이스를 가지고 있는지 체크후 없다면 null반환
         {
             return null;
@@ -53,7 +40,6 @@ public class ObjectPoolManager : NonBehaviourSingleton<ObjectPoolManager>
     //Addressable로 ObjectPool생성시 호출 
     public ObjectPool PoolRequest(ref AsyncOperationHandle<GameObject> handle, int start, int add)
     {
-        InactiveSet();
         GameObject baseObj = handle.WaitForCompletion();//handle이 메모리에 오브젝트를 완전히 로드시킬 때까지 대기
         if (!baseObj.TryGetComponent(out IPoolingable temp)) //대상이 오브젝트풀 인터페이스를 가지고 있는지 체크후 없다면 오브젝트를 언로드시키고 null반환
         {
@@ -87,7 +73,7 @@ public class ObjectPoolManager : NonBehaviourSingleton<ObjectPoolManager>
         return PoolRequest(ref handle, start, add);
     }
 
-    public ObjectPool PoolRequest(ref string assetName, int start, int add)
+    public ObjectPool PoolRequest(string assetName, int start, int add)
     {
         AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(assetName);
         return PoolRequest(ref handle, start, add);

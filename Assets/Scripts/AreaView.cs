@@ -10,7 +10,7 @@ using Color = UnityEngine.Color;
 public enum TILE_TYPE { Default =0, Enable = 1, Disable = 2,Selected = 3,Passable = 4, Active = 5,Invisible =6}
 
 
-[RequireComponent(typeof(MeshRenderer))]
+
 public class AreaView : MonoBehaviour,IPoolingable
 {
     [SerializeField] private Color[] colors;
@@ -24,8 +24,8 @@ public class AreaView : MonoBehaviour,IPoolingable
 
     private void Awake()
     {
-        meshFilter = GetComponent<MeshFilter>();
-        meshRenderer = GetComponent<MeshRenderer>();
+        meshFilter = transform.GetComponentInChildren<MeshFilter>();
+        meshRenderer = transform.GetComponentInChildren<MeshRenderer>();
 
     }
     private void OnEnable()

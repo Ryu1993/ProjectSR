@@ -141,7 +141,7 @@ public class CharacterAttack : Singleton<CharacterAttack>
         {
             AreaFieldClear(attackRangeList);
             field.Surface(centerPosition, out Vector3 target);
-            center = AreaViewManager.Instance.CallAreaView(target+new Vector3(0,0.1f,0), null);
+            center = AreaViewManager.Instance.CallAreaView(Vector3Int.RoundToInt(target));
             attackRangeList.Add(centerPosition,center);
         }
         else

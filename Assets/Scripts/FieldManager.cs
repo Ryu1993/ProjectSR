@@ -1,9 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
-using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using Random = UnityEngine.Random;
 
 
@@ -28,20 +26,22 @@ public class VoxelData
 }
 public enum Direction { Up, Down, Left, Right };
 
-public class FieldGenearateTest : MonoBehaviour
+public class FieldManager : Singleton<FieldManager>
 {
     [HideInInspector] public Voxel[][][] voxels;
     [SerializeField] private Vector3Int fieldSize;
     [SerializeField] private int floorHeight;
-    [SerializeField] private int waterDepth;
     [SerializeField] private int riverCount;
-    private Vector3Int[] sideDirections2D = new Vector3Int[] { Vector3Int.forward, Vector3Int.back, Vector3Int.left, Vector3Int.right };
-    private readonly Voxel outVoxel = new Voxel(VoxelType.Air);
+    [SerializeField, Range(0, 1f)] private float riverDepth;
+    /// <summary>
+    /// 0 : bed, 1: water 2~ : ground
+    /// </summary>
+    private List<GameObject> sampleGos = new List<GameObject>();
+    private List<GameObject> createdGos = new List<GameObject>();
+    public FieldThema thema;
 
-    [SerializeField] private GameObject testBed;
-    [SerializeField] private GameObject testGround;
-    [SerializeField] private GameObject testWater;
-
+    [HideInInspector]
+    public Dictionary<Vector2Int, Vector3Int> surfaceDic = new Dictionary<Vector2Int, Vector3Int>();
 
     public void Start()
     {
@@ -57,22 +57,24 @@ public class FieldGenearateTest : MonoBehaviour
         }
         catch(IndexOutOfRangeException)
         {
-            return outVoxel;
+            return null;
         }     
     }
     public void VoxelsLoopY(int y,Action<Vector3Int> action)
     {
-        for (int i = 0; i < fieldSize.x; i++)
-            for (int j = 0; j < fieldSize.z; j++)
-                action.Invoke(new Vector3Int(i, y, j));
+        for (int x = 0; x < fieldSize.x; x++)
+            for (int z = 0; z < fieldSize.z; z++)
+                action.Invoke(new Vector3Int(x, y, z));
     }
     public void VoxelsLoopXZ(Vector2Int coord2D,Action<Vector3Int> action)
     {
+        int x = coord2D.x;
+        int z = coord2D.y;
         for (int i = 0; i < fieldSize.y; i++)
-            action.Invoke(new Vector3Int(coord2D.x,i,coord2D.y));
+            action.Invoke(new Vector3Int(x,i,z));
     }
 
-    public void VoxelLoop(Action<Vector3Int> action)
+    public void VoxelsLoop(Action<Vector3Int> action)
     {
         for(int i = 0; i<fieldSize.x;i++)
             for(int j = 0; j<fieldSize.y;j++)
@@ -83,7 +85,6 @@ public class FieldGenearateTest : MonoBehaviour
 
     public void Generate()
     {
-
         VoxelFieldCreate();      
         FloorCreate();
         RiverCreate();
@@ -129,8 +130,11 @@ public class FieldGenearateTest : MonoBehaviour
 
     public void RiverCreate()
     {
-        List<Vector3Int> waterList = new List<Vector3Int>();
+        Vector3Int[] sideDirections2D = new Vector3Int[] { Vector3Int.forward, Vector3Int.back, Vector3Int.left, Vector3Int.right };
         DIRECTION[] direction = Enum.GetValues(typeof(DIRECTION)) as DIRECTION[];
+        List<Vector3Int> waterList = new List<Vector3Int>();
+        Voxel voxel = null;
+        int waterDepth = (int)(floorHeight * riverDepth);
         for (int i = 0; i < riverCount; i++)
         {       
             Shuffle.Array(ref direction);
@@ -142,23 +146,21 @@ public class FieldGenearateTest : MonoBehaviour
                 Vector2Int targetCoord = beginPoint.To2DInt();
                 VoxelsLoopXZ(targetCoord, (coord) =>
                 {
-                    if (Voxel(coord).type == VoxelType.Bed)
+                    voxel = Voxel(coord);
+                    if (voxel?.type == VoxelType.Bed)
                     {
-                        int airSurfaceCount = 0;
-                        SideCheck2D(coord, 
-                            (checkCoord) => { return Voxel(checkCoord).type == VoxelType.Air; },
-                            (none) => { airSurfaceCount++; });
-                        if(airSurfaceCount>2|coord.y>waterDepth)
-                            Voxel(coord).type = VoxelType.Air;
-                        else
+                        if (coord.y <= waterDepth)
                         {
-                            Voxel(coord).type = VoxelType.Water;
+                            voxel.type = VoxelType.Water;
                             waterList.Add(coord);
-                        }
-                            
+                        }                           
+                        else
+                            voxel.type = VoxelType.Air;
                     }
                 });
+
                 if (distance == 0) break;
+
                 Shuffle.Array(ref sideDirections2D);
                 foreach (Vector3Int direct in sideDirections2D)
                 {
@@ -172,47 +174,83 @@ public class FieldGenearateTest : MonoBehaviour
                 }
             }
         }
-        foreach (var waterCoord in waterList)
+
+        RiverCorrection(waterList);
+
+    }
+    internal void RiverCorrection(List<Vector3Int> waterList)
+    {
+
+        foreach (Vector3Int waterCoord in waterList)
         {
-            SideCheck2D(waterCoord,
-                (checkCoord) => 
+            CoordCheck.SideCheck2D(waterCoord,
+                (checkCoord) =>
                 {
-                    if (Voxel(checkCoord).type == VoxelType.Air)
-                        if (Voxel(checkCoord + Vector3Int.down).type != VoxelType.Water)
+                    if (Voxel(checkCoord)?.type == VoxelType.Air)
+                        if (Voxel(checkCoord + Vector3Int.down)?.type != VoxelType.Water)
                             return true;
-                    return false;                         
+                    return false;
                 },
                 (checkCoord) => Voxel(checkCoord).type = VoxelType.Ground);
         }
-
+        while (true)
+        {
+            int correctedCount = 0;
+            foreach(Vector3Int waterCoord in waterList)
+            {
+                if (Voxel(waterCoord)?.type == VoxelType.Air)
+                    continue;
+                int airContactSurfaceCount = 0;
+                CoordCheck.SideCheck2D(waterCoord,
+                    (checkCoord) => Voxel(checkCoord)?.type == VoxelType.Air,
+                    (none) => airContactSurfaceCount++,
+                    false) ;
+                if(airContactSurfaceCount>1)
+                {
+                    Voxel(waterCoord).type = VoxelType.Air;
+                    correctedCount++;
+                }
+            }
+            if (correctedCount == 0)
+                break;
+        }
     }
 
 
     internal void GroundCreate()
     {
-        VoxelLoop((coord) =>
+        Voxel topVoxel = null;
+        VoxelsLoop((coord) =>
         {
-            if (Voxel(coord).type == VoxelType.Bed)
-                if (Voxel(coord + Vector3Int.up) == outVoxel | Voxel(coord + Vector3Int.up).type == VoxelType.Air)
+            if (Voxel(coord).type == VoxelType.Air)
+                return;
+            topVoxel = Voxel(coord + Vector3Int.up);
+            if (topVoxel == null | topVoxel?.type == VoxelType.Air)
+            {
+                if (Voxel(coord).type == VoxelType.Bed)
                     Voxel(coord).type = VoxelType.Ground;
+                surfaceDic.Add(new Vector2Int(coord.x, coord.z), coord);
+            }               
         });
     }
 
     private void NullVoxelCheck()
     {
-        VoxelLoop((voxelCoord) =>
+        VoxelsLoop((voxelCoord) =>
         {
+            if (Voxel(voxelCoord).type == VoxelType.Air)
+                return;
             bool isNull = true;
-            SideCheck3D(voxelCoord,
+            CoordCheck.SideCheck3D(voxelCoord,
                 (checkCoord) =>
                 {
                     if (checkCoord.y < 0)
                         return false;
-                    if (Voxel(checkCoord) == outVoxel | Voxel(checkCoord).type == VoxelType.Air)
+                    if (Voxel(checkCoord) == null | Voxel(checkCoord)?.type == VoxelType.Air)
                         return true;
                     return false;
                 },
-                () => { isNull = false; });
+                (none) => { isNull = false; });
             if (isNull)
                 Voxel(voxelCoord).type = VoxelType.Null;
         });
@@ -220,25 +258,42 @@ public class FieldGenearateTest : MonoBehaviour
 
     private void SceneFieldCreate()
     {
-        VoxelLoop((coord) =>
+        FieldReset();
+        sampleGos.Add(Addressables.LoadAssetAsync<GameObject>(thema.bed).WaitForCompletion());
+        sampleGos.Add(Addressables.LoadAssetAsync<GameObject>(thema.water).WaitForCompletion());
+        foreach(var reference in thema.ground)
+            sampleGos.Add(Addressables.LoadAssetAsync<GameObject>(reference).WaitForCompletion());
+
+        GameObject sampleGo = null;
+        VoxelsLoop((coord) =>
         {
-            if (Voxel(coord).type == VoxelType.Bed)
-                Instantiate(testBed, coord, Quaternion.identity);
-            if (Voxel(coord).type == VoxelType.Water)
-                Instantiate(testWater, coord + (Vector3.down * 0.3f), Quaternion.identity);
-            if (Voxel(coord).type == VoxelType.Ground)
-                Instantiate(testGround, coord, Quaternion.identity);
+            Vector3 position = coord;
+            switch(Voxel(coord).type)
+            {
+                case VoxelType.Bed:
+                    sampleGo = sampleGos[0];
+                    break;
+                case VoxelType.Water:
+                    sampleGo = sampleGos[1];
+                    position += Vector3.down * 0.3f;
+                    break;
+                case VoxelType.Ground:
+                    sampleGo = sampleGos[Random.Range(2, sampleGos.Count)];
+                    break;
+                default: 
+                    return;
+            }
+            createdGos.Add(Instantiate(sampleGo, position, Quaternion.identity));
         });
     }
 
-
-
-
-
-
-
-
-
+    private void FieldReset()
+    {
+        foreach (GameObject go in createdGos)
+            Addressables.Release(go);
+        foreach (GameObject go in sampleGos)
+            Addressables.Release(go);
+    }
 
     internal Vector3Int SetPoint(DIRECTION direct)
     {
@@ -259,27 +314,6 @@ public class FieldGenearateTest : MonoBehaviour
 
 
 
-    private void SideCheck3D(Vector3Int origin,Func<Vector3Int,bool> condtion,Action acceptAction)
-    {
-        for(int i= -1;i<=1;i++)
-            for(int j =-1;j<=1;j++)
-                for(int k=-1;k<=1;k++)
-                {
-                    if (i == 0 & j == 0 & k == 0) continue;
-                    Vector3Int checkCoord = origin + new Vector3Int(i, j, k);
-                    if (condtion.Invoke(checkCoord))
-                        acceptAction.Invoke();
-                }
-    }
-    private void SideCheck2D(Vector3Int origin,Func<Vector3Int,bool> condition,Action<Vector3Int> acceptAction)
-    {
-        foreach (Vector3Int direct in sideDirections2D)
-        {
-            Vector3Int checkCoord = origin + direct;
-            if (condition.Invoke(checkCoord))
-                acceptAction.Invoke(checkCoord);
-        }
-    }
 
 
 
