@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
+using System.Linq;
 
 public static class ExtencionMethod 
 {
@@ -62,7 +63,24 @@ public static class ExtencionMethod
     }
 
 
-
+    public static Vector2Int PriorityPop(this List<Vector2Int> list, Vector2Int target)
+    {
+        Vector2Int minValue = list.Last();
+        Vector2Int distance = minValue - target;
+        int cost = Mathf.Abs(distance.x) + Mathf.Abs(distance.y);
+        foreach (Vector2Int value in list)
+        {
+            distance = value - target;
+            int valueCost = Mathf.Abs(distance.x) + Mathf.Abs(distance.y);
+            if (cost > valueCost)
+            {
+                minValue = value;
+                cost = valueCost;
+            }
+        }
+        list.Remove(minValue);
+        return minValue;
+    }
 
 
 
