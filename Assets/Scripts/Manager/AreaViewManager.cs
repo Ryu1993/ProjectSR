@@ -21,7 +21,7 @@ public class AreaViewManager : NonBehaviourSingleton<AreaViewManager>, ISetable
     private Dictionary<Vector2Int, Vector3Int> areaCoordDic = new Dictionary<Vector2Int, Vector3Int>();
     public Dictionary<Vector2Int, Vector3Int> AreaCoordDic { get { return areaCoordDic; } }
 
-
+    private Action<AreaView> areaReturn = (area) => { area.Return(); };
 
 
     public void CallAreaFieldShape(Vector2Int origin,int range,Dictionary<Vector2Int,AreaView> viewDictionary, FIELD_SHAPE shape = FIELD_SHAPE.Square)
@@ -70,16 +70,23 @@ public class AreaViewManager : NonBehaviourSingleton<AreaViewManager>, ISetable
             viewDictionary.Add(target2DCoord, areaViewPool.Call(targetCoord).GetComponent<AreaView>());
     }
 
+    
+
+    public void ReturnAreaViews()
+    {
+        areaViewDic.LoopDictionary(areaReturn);
+        areaViewDic.Clear();
+    }
+
 
     public AreaView CallAreaView(Vector3Int position)
     {
         return areaViewPool.Call(position).GetComponent<AreaView>();
     }
 
-
     public void CallAreaViews()
     {
-        areaViewDic.Clear();
+        ReturnAreaViews();
         areaCoordDic.LoopDictionary((Vector3Int coord) => areaViewDic.Add(new Vector2Int(coord.x, coord.z), CallAreaView(coord)));           
     }
 

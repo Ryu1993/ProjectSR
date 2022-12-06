@@ -5,13 +5,14 @@ using System.Linq;
 using static UnityEditor.ShaderData;
 using System.Collections;
 using Sirenix.OdinInspector;
+using Sirenix.OdinInspector.Editor.Validation;
+using static UnityEngine.UI.Image;
 
 public class MoveManager : MonoBehaviour
 {
     //TweenValue//
     #region TweenValue
-    private Tweener pathTween;
-    [ShowInInspector] private Vector3[] pathPoints = new Vector3[3];
+    private Vector3[] pathPoints = new Vector3[3];
     private float pathTime;
     private PathType pathType;
     #endregion
@@ -33,7 +34,7 @@ public class MoveManager : MonoBehaviour
     private Camera mainCam;
     [SerializeField]private LayerMask areaViewMask;
     private List<AreaView> moveableAreaList = new List<AreaView>(4);
-    [ShowInInspector]private List<Vector3Int> selectedAreaCoordList = new List<Vector3Int>();
+    private List<Vector3Int> selectedAreaCoordList = new List<Vector3Int>();
     private void Awake()
     {
         field = FieldManager.Instance;
@@ -73,6 +74,12 @@ public class MoveManager : MonoBehaviour
 
     private IEnumerator OrderMove()
     {
+        if(AreaViewManager.Instance.AreaViewDic.Count!=0)
+        {
+            MoveableAreaListClear();
+            AreaViewManager.Instance.ReturnAreaViews();
+        }
+
         Voxel targetVoxel;
         bool isPass = false;
         for(int i = 0; i<selectedAreaCoordList.Count; i++)
@@ -83,19 +90,21 @@ public class MoveManager : MonoBehaviour
                 isPass = true;
                 continue;
             }
-            PathSetting(i, ref isPass,out Vector3 direction);
-            //if (Vector3Int.RoundToInt(orderTransform.position + orderTransform.forward) != selectedAreaCoordList[i])
-            //    yield return orderTransform.DOLookAt(direction+Vector3.up*orderTransform.position.y, 0.5f).WaitForCompletion();
-            yield return orderTransform.DOPath(pathPoints, pathTime, pathType).SetEase(Ease.Linear).WaitForCompletion();
+            PathSetting(i, ref isPass);
+            if ((orderTransform.position + orderTransform.forward).To2DInt() != selectedAreaCoordList[i].To2DInt())
+                yield return orderTransform.DOLookAt(new Vector3(selectedAreaCoordList[i].x, orderTransform.position.y, selectedAreaCoordList[i].z), 0.3f);
+            yield return orderTransform.DOPath(pathPoints, pathTime, pathType).WaitForCompletion();
         }
+        selectedAreaCoordList.Clear();
+
+        isTestCreate = false;
     }
 
-    private void PathSetting(int i,ref bool isPass,out Vector3 direction2D)
+    private void PathSetting(int i,ref bool isPass)
     {
         Vector3 orderPoint = orderTransform.position;
         pathPoints[2] = selectedAreaCoordList[i] + Vector3Int.up;
         Vector3 middlePoint = (orderPoint + pathPoints[2]) * 0.5f;
-        direction2D = new Vector3(pathPoints[2].x - orderPoint.x, 0, pathPoints[2].z - orderPoint.z).normalized;
         int targetHeight = Mathf.RoundToInt(pathPoints[2].y);
         int orderHeight = Mathf.RoundToInt(orderPoint.y);
         int heightDistance = targetHeight - orderHeight;
@@ -109,11 +118,12 @@ public class MoveManager : MonoBehaviour
         }
         if (heightDistance < 0)
         {
-            pathPoints[0] = orderPoint+direction2D * 0.5f;
-            pathPoints[1] = (pathPoints[0] + pathPoints[2]) / 2;
-            pathPoints[1].y = (pathPoints[0].y + pathPoints[1].y) / 2;
+            pathPoints[0] = (orderPoint + pathPoints[2]) / 2;
+            pathPoints[1] = pathPoints[2];
+            pathPoints[1].y = pathPoints[0].y;
+            pathPoints[0].y = orderPoint.y;    
             pathType = PathType.CatmullRom;
-            pathTime = 0.8f;
+            pathTime = 1f;
         }
         if (heightDistance == 0)
         {
@@ -123,7 +133,7 @@ public class MoveManager : MonoBehaviour
                 pathPoints[1] = middlePoint + Vector3.up * 0.5f;
                 pathType = PathType.CatmullRom;
                 isPass = false;
-                pathTime = 1.2f;
+                pathTime = 1.5f;
             }
             else
             {
@@ -144,8 +154,6 @@ public class MoveManager : MonoBehaviour
         isDiagonalAllowed = order.isDiagonalMoveAllowed;
         moveableFieldShape = isDiagonalAllowed ? FIELD_SHAPE.Square : FIELD_SHAPE.RangeLimitSquare;
         moveablePower = maxMoveablePower;
-
-
         AreaViewManager.Instance.AreaCoordSet(orderTransform.position.To2DInt(),maxMoveablePower, moveableFieldShape);
     }
     
@@ -178,21 +186,14 @@ public class MoveManager : MonoBehaviour
     private void NextPathSelectCancle()
     {
         moveablePower++;
-        if(moveablePower>maxMoveablePower)
-        {
-
-        }
+        MoveableAreaListClear();
+        AreaView lastSelecterdArea = AreaViewManager.Instance.AreaViewDic[selectedAreaCoordList.Last().To2DInt()];
+        lastSelecterdArea.SetState(lastSelecterdArea.curType);
+        selectedAreaCoordList.RemoveAt(selectedAreaCoordList.Count - 1);
+        if (selectedAreaCoordList.Count == 0)
+            MoveableAreaSet(Vector3Int.RoundToInt(orderTransform.position + Vector3.down), isDiagonalAllowed);
         else
-        {
-            MoveableAreaListClear();
-            AreaView lastSelecterdArea = AreaViewManager.Instance.AreaViewDic[selectedAreaCoordList.Last().To2DInt()];
-            lastSelecterdArea.SetState(lastSelecterdArea.curType);
-            selectedAreaCoordList.RemoveAt(selectedAreaCoordList.Count - 1);
-            if (selectedAreaCoordList.Count == 0)
-                MoveableAreaSet(Vector3Int.RoundToInt(orderTransform.position + Vector3.down), isDiagonalAllowed);
-            else
-                MoveableAreaSet(selectedAreaCoordList.Last(), isDiagonalAllowed);
-        }
+            MoveableAreaSet(selectedAreaCoordList.Last(), isDiagonalAllowed);
     }
 
 
@@ -230,7 +231,38 @@ public class MoveManager : MonoBehaviour
     }
 
     //재귀를 이용해 이동 가능한 지역인지 판정
-    private bool IsMoveableCheck(Vector3Int origin,int moveablePower ,int jumpableHeight, bool isDiagonalAllowed)
+    private bool IsMoveableCheck(Vector3Int origin,int moveablePower ,int jumpableHeight, bool isDiagonalAllowed,System.Action<Vector2Int> acceptAction = null)
+    {
+        Vector2Int origin2D = origin.To2DInt();
+        bool isMoveable = false;
+
+        if (acceptAction == null)
+            acceptAction = (none) => isMoveable = true;
+        if (moveablePower <= 1)
+            if (field.Voxel(origin).type != VoxelType.Ground)
+                return false;
+        CoordCheck.SideCheck2D(origin2D,
+            (checkCoord) =>
+            {
+                if (!AreaViewManager.Instance.AreaCoordDic.TryGetValue(checkCoord, out Vector3Int areaCoord))
+                    return false;
+                if (Mathf.Abs(areaCoord.y - origin.y) > jumpableHeight)
+                    return false;
+                if(moveablePower>1)
+                    return IsMoveableCheck(areaCoord, moveablePower - 1, jumpableHeight, isDiagonalAllowed);
+                return true;
+            },
+            acceptAction,
+            isDiagonalAllowed);
+        return isMoveable;
+    }
+
+
+
+
+    private Dictionary<Vector2Int, int> moveCost = new Dictionary<Vector2Int, int>();
+
+    private bool AutoMoveableCheck(Vector3Int origin,Vector3 target,int moveablePower,int jumpableHeight, bool isDiagonalAllowed)
     {
         if (moveablePower <= 1)
             if (field.Voxel(origin).type != VoxelType.Ground)
@@ -244,19 +276,39 @@ public class MoveManager : MonoBehaviour
                     return false;
                 if (Mathf.Abs(areaCoord.y - origin.y) > jumpableHeight)
                     return false;
-                if(moveablePower>1)
-                    return IsMoveableCheck(areaCoord, moveablePower - 1, jumpableHeight, isDiagonalAllowed);
+                if (moveablePower > 1)
+                    return AutoMoveableCheck(areaCoord,target,moveablePower - 1, jumpableHeight, isDiagonalAllowed);
                 return true;
             },
-            (none) => { isMoveable = true; },
+            (checkCoord) => 
+            { 
+                isMoveable = true;
+                if(!moveCost.TryGetValue(checkCoord, out int distance))
+                {
+                    Vector2Int distanceFromTarget = target.To2DInt() + checkCoord;
+                    moveCost.Add(checkCoord,Mathf.Abs(distanceFromTarget.x)+Mathf.Abs(distanceFromTarget.y)+maxMoveablePower-moveablePower+1);
+                }
+            },
             isDiagonalAllowed);
         return isMoveable;
     }
 
+    private Vector2Int AutoMoveTargetSet()
+    {
+        Vector2Int targetCoord = Vector2Int.zero;
+        int minCost = 100;
+        moveCost.LoopDictionary((cost) =>
+        { 
+            if(cost.Value<minCost)
+            {
+                minCost = cost.Value;
+                targetCoord = cost.Key;
+            }           
+        });
+        return targetCoord;
+    }
 
 
-
-  
 
 
 

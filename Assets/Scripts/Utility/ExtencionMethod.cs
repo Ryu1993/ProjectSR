@@ -22,15 +22,15 @@ public static class ExtencionMethod
             return info.normalizedTime;
         return 0f;
     }
-    public static void LoopDictionary<T1,T2>(this Dictionary<T1,T2> dic,UnityAction<T2> action)
+    public static void LoopDictionary<T1,T2>(this Dictionary<T1,T2> dic,Action<T2> action)
     {
         LoopDictionary(dic, (pair) => action?.Invoke(pair.Value));
     }
-    public static void LoopDictionary<T1,T2>(this Dictionary<T1,T2> dic,UnityAction<T1> action)
+    public static void LoopDictionary<T1,T2>(this Dictionary<T1,T2> dic,Action<T1> action)
     {
         LoopDictionary(dic, (pair) => action?.Invoke(pair.Key));
     }
-    public static void LoopDictionary<T1,T2>(this Dictionary<T1, T2> dic, UnityAction<KeyValuePair<T1,T2>> action)
+    public static void LoopDictionary<T1,T2>(this Dictionary<T1, T2> dic, Action<KeyValuePair<T1,T2>> action)
     {
         foreach (KeyValuePair<T1, T2> pair in dic)
             action?.Invoke(pair);
