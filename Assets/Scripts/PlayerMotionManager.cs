@@ -34,7 +34,7 @@ public class PlayerMotionManager : Singleton<PlayerMotionManager>
                 clipsIndex = i;
         }
     }
-    private void MotionSetByCharacter(List<Character> characters, Dictionary<AttackInfo, MotionPlayer> dictionary,Action callback)
+    private void MotionSetByCharacter(List<Character> characters, Dictionary<AttackInfo, MotionPlayer> dictionary,Action callback = null)
     {
         foreach (Character character in characters)
             foreach (var info in character.attackList)
@@ -46,10 +46,11 @@ public class PlayerMotionManager : Singleton<PlayerMotionManager>
                     info.attackMotion.LoadAssetAsync<AnimationClip>().Completed += 
                         (handle) => { player.motionClip = handle.Result;
                                       player.motionClipPair = new KeyValuePair<AnimationClip, AnimationClip>(originalAttack, player.motionClip);
-                                      callback.Invoke(); };
-                    info.attackEffect.InstantiateAsync(Vector3.zero, Quaternion.identity).Completed += 
+                                      callback?.Invoke(); };
+                    info.attackEffect.InstantiateAsync(Vector3.down, Quaternion.identity).Completed += 
                         (handle) => { player.effect = handle.Result;
-                                      callback.Invoke(); };
+                                      player.effect.SetActive(false);
+                                      callback?.Invoke(); };
                     dictionary.Add(info, player);
                 }
     }

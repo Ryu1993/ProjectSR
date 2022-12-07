@@ -5,12 +5,15 @@ using Unity.VisualScripting;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
+public enum MonsterType {Close,Range }
+
 public class Monster : Character
 {
 
     public Character target;
+    public MonsterType monType;
     private List<AttackInfo> attackCheckList = new List<AttackInfo>(4);
-
+    public int attackRange;
 
     public IEnumerator MonsterAction()
     {

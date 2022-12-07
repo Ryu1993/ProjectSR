@@ -18,7 +18,7 @@ public static class CoordCheck
                         acceptAction.Invoke(checkCoord);
                 }
     }
-    public static void SideCheck2D(Vector3Int origin, Func<Vector3Int, bool> condition, Action<Vector3Int> acceptAction, bool isDiagonalAllowed = true)
+    public static void SideCheck2D(Vector3Int origin, Func<Vector3Int, bool> condition, Action<Vector3Int> acceptAction = null, bool isDiagonalAllowed = true)
     {
         for (int i = -1; i <= 1; i++)
             for (int j = -1; j <= 1; j++)
@@ -30,11 +30,11 @@ public static class CoordCheck
                         continue;
                 Vector3Int checkCoord = origin + new Vector3Int(i, 0, j);
                 if (condition.Invoke(checkCoord))
-                    acceptAction.Invoke(checkCoord);
+                    acceptAction?.Invoke(checkCoord);
             }
     }
 
-    public static void SideCheck2D(Vector2Int origin, Func<Vector2Int, bool> condition, Action<Vector2Int> acceptAction, bool isDiagonalAllowed = true)
+    public static void SideCheck2D(Vector2Int origin, Func<Vector2Int, bool> condition, Action<Vector2Int> acceptAction = null, bool isDiagonalAllowed = true)
     {
         for (int i = -1; i <= 1; i++)
             for (int j = -1; j <= 1; j++)
@@ -46,7 +46,7 @@ public static class CoordCheck
                         continue;
                 Vector2Int checkCoord = origin + new Vector2Int(i,j);
                 if (condition.Invoke(checkCoord))
-                    acceptAction.Invoke(checkCoord);
+                    acceptAction?.Invoke(checkCoord);
             }
     }
 

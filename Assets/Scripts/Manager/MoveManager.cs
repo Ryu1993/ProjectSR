@@ -8,6 +8,7 @@ using System.Collections;
 using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor.Validation;
 using static UnityEngine.UI.Image;
+using UnityEditor.Build.Pipeline;
 
 public class MoveManager : MonoBehaviour
 {
@@ -19,6 +20,7 @@ public class MoveManager : MonoBehaviour
     #endregion
     //////////////
 
+    private Monster monsterOrder;
     private Transform orderTransform;
     private Character order;
     private int moveablePower;
@@ -36,6 +38,7 @@ public class MoveManager : MonoBehaviour
     [SerializeField]private LayerMask areaViewMask;
     private List<AreaView> moveableAreaList = new List<AreaView>(4);
     private List<Vector3Int> selectedAreaCoordList = new List<Vector3Int>();
+    private List<Vector3Int> pathFindingTargets;
 
 
     private Action<Vector2Int> defaultAcceptAction;
@@ -60,7 +63,7 @@ public class MoveManager : MonoBehaviour
 
 
     public Character test;
-    private bool isTestCreate;
+    //private bool isTestCreate;
     private void TestMove()
     {
         //if (Input.GetKeyDown(KeyCode.K)&!isTestCreate)
@@ -103,41 +106,57 @@ public class MoveManager : MonoBehaviour
                 isPass = true;
                 continue;
             }
-            PathSetting(i, ref isPass);
+            PathSetting(i, ref isPass,out MoveAnimation moveAnimation);
             if ((orderTransform.position + orderTransform.forward).To2DInt() != selectedAreaCoordList[i].To2DInt())
                 yield return orderTransform.DOLookAt(new Vector3(selectedAreaCoordList[i].x, orderTransform.position.y, selectedAreaCoordList[i].z), 0.3f);
-            yield return orderTransform.DOPath(pathPoints, pathTime, pathType).WaitForCompletion();
+            switch(moveAnimation)
+            {
+                case MoveAnimation.Jump:
+                    order.Animator.SetInteger(AnimationHash.animation, 16);
+                    break;
+                case MoveAnimation.Move:
+                    order.Animator.SetInteger(AnimationHash.animation, 20);
+                    break;
+            }
+            yield return orderTransform.DOPath(pathPoints, pathTime, pathType).SetEase(Ease.Linear).WaitForCompletion();
         }
         selectedAreaCoordList.Clear();
+        order.Animator.SetInteger(AnimationHash.animation, 0);
 
-        isTestCreate = false;
+        //isTestCreate = false;
     }
-
-    private void PathSetting(int i,ref bool isPass)
+    public enum MoveAnimation { Jump,Move}
+    private void PathSetting(int i,ref bool isPass,out MoveAnimation moveAnim)
     {
+        moveAnim = MoveAnimation.Move;
         Vector3 orderPoint = orderTransform.position;
         pathPoints[2] = selectedAreaCoordList[i] + Vector3Int.up;
         Vector3 middlePoint = (orderPoint + pathPoints[2]) * 0.5f;
         int targetHeight = Mathf.RoundToInt(pathPoints[2].y);
         int orderHeight = Mathf.RoundToInt(orderPoint.y);
         int heightDistance = targetHeight - orderHeight;
-        if (heightDistance > 0)
+        if(heightDistance!=0)
         {
-            pathPoints[0] = pathPoints[2];
-            pathPoints[1] = new Vector3(orderPoint.x, middlePoint.y, orderPoint.z);
-            pathPoints[2] = new Vector3(middlePoint.x, pathPoints[0].y + 0.5f, middlePoint.z);
-            pathType = PathType.CubicBezier;
-            pathTime = 1f;
+            if (heightDistance > 0)
+            {
+                pathPoints[0] = pathPoints[2];
+                pathPoints[1] = new Vector3(orderPoint.x, middlePoint.y, orderPoint.z);
+                pathPoints[2] = new Vector3(middlePoint.x, pathPoints[0].y + 0.5f, middlePoint.z);
+                pathType = PathType.CubicBezier;
+                pathTime = 0.6f;
+            }
+            if (heightDistance < 0)
+            {
+                pathPoints[0] = (orderPoint + pathPoints[2]) / 2;
+                pathPoints[1] = pathPoints[2];
+                pathPoints[1].y = pathPoints[0].y;
+                pathPoints[0].y = orderPoint.y;
+                pathType = PathType.CatmullRom;
+                pathTime = 0.5f;
+            }
+            moveAnim = MoveAnimation.Jump;
         }
-        if (heightDistance < 0)
-        {
-            pathPoints[0] = (orderPoint + pathPoints[2]) / 2;
-            pathPoints[1] = pathPoints[2];
-            pathPoints[1].y = pathPoints[0].y;
-            pathPoints[0].y = orderPoint.y;    
-            pathType = PathType.CatmullRom;
-            pathTime = 1f;
-        }
+
         if (heightDistance == 0)
         {
             pathPoints[0] = orderPoint;
@@ -147,6 +166,7 @@ public class MoveManager : MonoBehaviour
                 pathType = PathType.CatmullRom;
                 isPass = false;
                 pathTime = 1.5f;
+                moveAnim = MoveAnimation.Jump;
             }
             else
             {
@@ -160,7 +180,7 @@ public class MoveManager : MonoBehaviour
 
     private void MoveOrderSet(Character order)
     {
-        Monster monsterOrder = order as Monster;
+        monsterOrder = order as Monster;
         targetCoord = monsterOrder ? monsterOrder.target.transform.position : Vector3.zero;
         this.order = order;        
         orderTransform = order.transform;
@@ -282,20 +302,74 @@ public class MoveManager : MonoBehaviour
         StartCoroutine(OrderMove());
     }
 
-   
 
 
 
-  
+
+    private Vector2Int PathFindingTargetSet(Vector3 target)
+    {
+        pathFindingTargets = selectedAreaCoordList;
+        pathFindingTargets.Clear();
+        Action<Vector3Int, Vector3Int> compare = null;
+        Vector2Int target2D = target.To2DInt();
+        Vector3Int result = Vector3Int.down;
+        int targetHeight = Mathf.RoundToInt(target.y);
+        int range = monsterOrder.attackRange;
+        for(int k = 0; k< monsterOrder.attackRange; k++)
+        {
+            for (int i = -range; i <= range; i++)
+                for (int j = -range; j <= range; j++)
+                {
+                    if (i == 0 & j == 0)
+                        continue;
+                    if (Mathf.Abs(i) + Mathf.Abs(j) != range)
+                        continue;
+                    if (field.surfaceDic.TryGetValue(target2D + new Vector2Int(i, j), out Vector3Int surfaceCoord))
+                        pathFindingTargets.Add(surfaceCoord);
+                }
+            range--;
+            if (pathFindingTargets.Count != 0)
+                break;
+        }
+        if (pathFindingTargets.Count == 0)
+            return orderTransform.position.To2DInt();
+        switch (monsterOrder.monType)
+        {
+            case MonsterType.Close:
+                compare = (a, b) =>
+                {
+                    
+                    int aDistance = Mathf.Abs(targetHeight - a.y);
+                    int bDistance = Mathf.Abs(targetHeight - b.y);
+                    result = aDistance < bDistance ? a : b;
+                };
+                break;
+            case MonsterType.Range:
+                compare = (a, b) =>
+                {
+                    result = Mathf.Max(a.y, b.y) == a.y ? a : b;
+                };
+                break;
+        }
+        Shuffle.ShuffleList(pathFindingTargets);
+        foreach (var side in pathFindingTargets)
+        {
+            if(field.Voxel(side).type==VoxelType.Ground)
+                compare(result, side);
+        }
+        pathFindingTargets.Clear();
+        return result.To2DInt();
+    }
 
 
 
     private void PathFinding()
     {
+        Vector2Int orderPosition2D = orderTransform.position.To2DInt();
+        Vector3Int targetCoordInt = Vector3Int.RoundToInt(targetCoord);
+        Vector2Int targetCoord2D = PathFindingTargetSet(targetCoord);//타겟 주변중에 하나를 목표로 설정,몬스터의 타입에 따라 다르게 선정
         prevCoordDic.Clear();
         ditectPools.Clear();
-        Vector2Int orderPosition2D = orderTransform.position.To2DInt();
-        Vector2Int targetCoord2D = targetCoord.To2DInt();
         ditectPools.Add(orderPosition2D);
         prevCoordDic.Add(orderPosition2D, orderPosition2D);
         while(ditectPools.Count > 0)
@@ -303,16 +377,26 @@ public class MoveManager : MonoBehaviour
             Vector2Int curDitectCoord = ditectPools.PriorityPop(targetCoord2D);
             if (curDitectCoord == targetCoord2D)
                 break;
+            bool isClosed = false;
+            CoordCheck.SideCheck2D(targetCoord2D, (checkCoord) => checkCoord == curDitectCoord, (none) => isClosed = true, isDiagonalAllowed);
+            if(isClosed)
+            {
+                if (!prevCoordDic.TryGetValue(targetCoord2D, out Vector2Int value))
+                    prevCoordDic.Add(targetCoord2D, curDitectCoord);
+                break;
+            }
             int curCoordHeight = field.surfaceDic[curDitectCoord].y;
             CoordCheck.SideCheck2D(curDitectCoord,
                 (checkCoord) =>
                 {
                     if (!field.surfaceDic.TryGetValue(checkCoord, out Vector3Int surfaceCoord))
                         return false;
+                    if (surfaceCoord + Vector3Int.up == targetCoordInt)
+                        return false;
                     if (Mathf.Abs(surfaceCoord.y - curCoordHeight) > jumpableHeight)
                         return false;
                     if (field.Voxel(surfaceCoord + Vector3Int.up) == null | field.Voxel(surfaceCoord + Vector3Int.up)?.type != VoxelType.Air)
-                        return false;
+                        return false;                 
                     return true;
                 }, 
                 (checkCoord) =>
