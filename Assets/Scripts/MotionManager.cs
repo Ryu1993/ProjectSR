@@ -3,37 +3,81 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
+public class WaitMotion : CustomYieldInstruction
+{
+    public override bool keepWaiting
+    {
+        get
+        {
+            return !MotionManager.Instance.isMotionCompleted;
+        }
+    }
+}
+
+public enum Motion { Idle,Move,Jump,Attack}
+
 public class MotionManager : Singleton<MotionManager>
 {
-    public List<KeyValuePair<AnimationClip, AnimationClip>> playerControllerClips = new List<KeyValuePair<AnimationClip, AnimationClip>>();
-    public Dictionary<AttackInfo, MotionPlayer> playerAttackMotions = new Dictionary<AttackInfo, MotionPlayer>();
-    public Dictionary<AttackInfo, MotionPlayer> monsterAttackMotions = new Dictionary<AttackInfo, MotionPlayer>();
+    [HideInInspector] public Dictionary<AttackInfo, MotionPlayer> playerAttackMotions = new Dictionary<AttackInfo, MotionPlayer>();
+    [HideInInspector] public Dictionary<AttackInfo, MotionPlayer> monsterAttackMotions = new Dictionary<AttackInfo, MotionPlayer>();
+    private List<KeyValuePair<AnimationClip, AnimationClip>> playerControllerClips = new List<KeyValuePair<AnimationClip, AnimationClip>>();
     public AnimatorOverrideController playerOverrideController;
-    public RuntimeAnimatorController playerOriginController;
-    public AnimationClip playerOriginalAttackClip;
-    public int playerAttackClipIndex;
+    public bool isMotionCompleted;
+    private WaitMotion waitMotion = new WaitMotion();
+    private readonly int animationHash = Animator.StringToHash("animation");
 
-    public void PlayerAnimationChangeSet(Character character)
+    public CustomYieldInstruction PlayerAttackSet(Character character,Vector3 target)
     {
-        playerOriginController = character.Animator.runtimeAnimatorController;
         playerControllerClips.Clear();
-        for(int i = 0; i<playerOriginController.animationClips.Length; i++)
+        RuntimeAnimatorController playerOriginController = character.Animator.runtimeAnimatorController;        
+        AnimationClip playerOriginalAttackClip = character.originalAttackClip;
+        KeyValuePair<AnimationClip, AnimationClip> changePair;
+        if (playerAttackMotions.TryGetValue(character.CurAttackInfo, out MotionPlayer motion))
+        {
+            IPlayerMotionable playerMotion = motion as IPlayerMotionable;
+            changePair = new KeyValuePair<AnimationClip, AnimationClip>(playerOriginalAttackClip, playerMotion.motionClip);
+        }
+        else
+            return null;
+        for (int i = 0; i < playerOriginController.animationClips.Length; i++)
         {
             AnimationClip clip = playerOriginController.animationClips[i];
             playerControllerClips.Add(new KeyValuePair<AnimationClip, AnimationClip>(clip, clip));
             if (clip == playerOriginalAttackClip)
-                playerAttackClipIndex = i;
+                playerControllerClips[i] = changePair;
         }
         playerOverrideController.ApplyOverrides(playerControllerClips);
-        
+        character.Animator.runtimeAnimatorController = playerOverrideController;
+        motion.Play(character,target);
+        return waitMotion;
     }
 
-    private void Awake()
+    public CustomYieldInstruction Attack(Character character,Vector3 target)
     {
-        MotionSetByCharacter(GameManager.Instance.party, playerAttackMotions);
-        MotionSetByCharacter(GameManager.Instance.enemy, monsterAttackMotions);
-        
+        if (character is Monster)
+        {
+            if (monsterAttackMotions.TryGetValue(character.CurAttackInfo, out MotionPlayer motion))
+                motion.Play(character, target);
+            return waitMotion;
+        }          
+        else
+            return PlayerAttackSet(character, target);
     }
+
+    public void MotionChange(Animator playAnimator,Motion changeMotion)
+    {
+        playAnimator.SetInteger(animationHash, (int)changeMotion);
+        playAnimator.Update(0);
+        playAnimator.SetInteger(animationHash, 0);
+    }
+
+
+    //private void Awake()
+    //{
+    //    MotionSetByCharacter(GameManager.Instance.party, playerAttackMotions);
+    //    MotionSetByCharacter(GameManager.Instance.enemy, monsterAttackMotions);
+    //}
 
 
 
@@ -45,10 +89,9 @@ public class MotionManager : Singleton<MotionManager>
                 if (!dictionary.ContainsKey(info))
                 {
                     MotionPlayer player = Activator.CreateInstance(Type.GetType(info.name)) as MotionPlayer;
-                    PlayerMotion playerMotion = player as PlayerMotion;
-                    player.overrideController = playerOverrideController;
-                    if (player == null) continue;                    
-                    if(playerMotion != null)
+                    if (player == null) continue;
+                    IPlayerMotionable playerMotion = player as IPlayerMotionable;
+                    if (playerMotion != null)
                     {
                         info.attackMotion.LoadAssetAsync<AnimationClip>().Completed +=
                             (handle) => {
@@ -60,6 +103,7 @@ public class MotionManager : Singleton<MotionManager>
                         (handle) => {
                             player.effect = handle.Result;
                             player.effect.SetActive(false);
+                            player.Set();
                             callback?.Invoke();
                         };
                     dictionary.Add(info, player);
