@@ -106,29 +106,21 @@ public class MoveManager : MonoBehaviour
                 isPass = true;
                 continue;
             }
-            PathSetting(i, ref isPass,out MoveAnimation moveAnimation);
+            PathSetting(i, ref isPass,out Motion moveMotion);
             if ((orderTransform.position + orderTransform.forward).To2DInt() != selectedAreaCoordList[i].To2DInt())
                 yield return orderTransform.DOLookAt(new Vector3(selectedAreaCoordList[i].x, orderTransform.position.y, selectedAreaCoordList[i].z), 0.3f);
-            switch(moveAnimation)
-            {
-                case MoveAnimation.Jump:
-                    order.Animator.SetInteger(AnimationHash.animation, 16);
-                    break;
-                case MoveAnimation.Move:
-                    order.Animator.SetInteger(AnimationHash.animation, 20);
-                    break;
-            }
+            MotionManager.Instance.MotionChange(order.Animator,moveMotion);
             yield return orderTransform.DOPath(pathPoints, pathTime, pathType).SetEase(Ease.Linear).WaitForCompletion();
         }
         selectedAreaCoordList.Clear();
-        order.Animator.SetInteger(AnimationHash.animation, 0);
+        MotionManager.Instance.MotionChange(order.Animator, Motion.Idle);
 
         //isTestCreate = false;
     }
     public enum MoveAnimation { Jump,Move}
-    private void PathSetting(int i,ref bool isPass,out MoveAnimation moveAnim)
+    private void PathSetting(int i,ref bool isPass,out Motion moveAnim)
     {
-        moveAnim = MoveAnimation.Move;
+        moveAnim = Motion.Move;
         Vector3 orderPoint = orderTransform.position;
         pathPoints[2] = selectedAreaCoordList[i] + Vector3Int.up;
         Vector3 middlePoint = (orderPoint + pathPoints[2]) * 0.5f;
@@ -154,7 +146,7 @@ public class MoveManager : MonoBehaviour
                 pathType = PathType.CatmullRom;
                 pathTime = 0.5f;
             }
-            moveAnim = MoveAnimation.Jump;
+            moveAnim = Motion.Jump;
         }
 
         if (heightDistance == 0)
@@ -166,7 +158,7 @@ public class MoveManager : MonoBehaviour
                 pathType = PathType.CatmullRom;
                 isPass = false;
                 pathTime = 1.5f;
-                moveAnim = MoveAnimation.Jump;
+                moveAnim = Motion.Jump;
             }
             else
             {
