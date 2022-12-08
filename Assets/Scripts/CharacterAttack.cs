@@ -206,38 +206,39 @@ public class CharacterAttack : Singleton<CharacterAttack>
         else
             motionDic = PlayerMotionManager.Instance.monsterMotions;
         AreaFieldClear(selectRangeList);
-        return motionDic[attack].Play(character.Animator, target, () =>
-        {
-            print("공격"); // 이부분 커스텀
-            attackRangeList.LoopDictionary((key) => 
-            { 
-                if(field.SurfaceState(key) == CUBE_TYPE.OnCharacter)
-                {
-                    field.Surface(key, out Vector3Int target);
-                    Character targetChar = field.CubeDataCall(target).onChracter;
-                    Monster monster =  targetChar as Monster;
-                    if (isPlayer)
-                    {                     
-                        if (monster != null)
-                            targetChar.Animator.SetInteger(AnimationHash.animation, 8);
-                    }
-                    else
-                    {
-                        if(monster == null)
-                            targetChar.Animator.SetInteger(AnimationHash.animation, 8);
+        return null;
+        //return motionDic[attack].Play(character.Animator, target, () =>
+        //{
+        //    print("공격"); // 이부분 커스텀
+        //    attackRangeList.LoopDictionary((key) => 
+        //    { 
+        //        if(field.SurfaceState(key) == CUBE_TYPE.OnCharacter)
+        //        {
+        //            field.Surface(key, out Vector3Int target);
+        //            Character targetChar = field.CubeDataCall(target).onChracter;
+        //            Monster monster =  targetChar as Monster;
+        //            if (isPlayer)
+        //            {                     
+        //                if (monster != null)
+        //                    targetChar.Animator.SetInteger(AnimationHash.animation, 8);
+        //            }
+        //            else
+        //            {
+        //                if(monster == null)
+        //                    targetChar.Animator.SetInteger(AnimationHash.animation, 8);
 
-                    }
-                    targetChar.Animator.Update(0);
-                    targetChar.Animator.SetInteger(AnimationHash.animation,0);
-                }        
-            });
+        //            }
+        //            targetChar.Animator.Update(0);
+        //            targetChar.Animator.SetInteger(AnimationHash.animation,0);
+        //        }        
+        //    });
 
 
-            AreaFieldClear(attackRangeList);
-            rangeViewProgress = null;
-            character.actionable[0] = false;
-            InputManager.Instance.InputReset(isPlayer);
-        });
+        //    AreaFieldClear(attackRangeList);
+        //    rangeViewProgress = null;
+        //    character.actionable[0] = false;
+        //    InputManager.Instance.InputReset(isPlayer);
+        //});
 
     }
 

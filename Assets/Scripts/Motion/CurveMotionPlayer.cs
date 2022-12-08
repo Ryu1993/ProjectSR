@@ -8,65 +8,35 @@ using UnityEngine;
 public abstract class CurveMotionPlayer : MotionPlayer
 {
     protected Vector3[] ways = new Vector3[3];
-    protected List<Vector3Int> wayObstacle;
-    protected ParticleSystem _diffusionParitcle;
-    protected ParticleSystem _trailParticle;
-    public override YieldInstruction Play(Animator order, Vector3 target, Action attackAction)
+    protected void WayPointSet(Vector3Int orderPosition, Vector3Int targetPosition)
     {
-        AnimatorSet(order);
-        WayPointSet(order.transform.position, target);
-        return PlayerMotionManager.Instance.StartCoroutine(PlayAlongPath(attackAction));
-    }
-
-    protected void WayPointSet(Vector3 orderPos,Vector3 target)
-    {
-        Vector3Int targetInt = target.ToInt();
-        Vector3Int maxHeight = Vector3Int.zero;
-        trailParticle.transform.position = orderPos;
-        trailParticle.transform.LookAt(target);
-        trailParticle.transform.position += trailParticle.transform.forward * 0.5f;
-        diffusionParitcle.transform.position = target;
-        ways[0] = target;
-        wayObstacle = CubeCheck.CubeRaySurface(orderPos, target);
-        foreach (var obstacle in wayObstacle)
+        orderPosition += Vector3Int.up;
+        CoordCheck.VoxelRayCast(orderPosition, targetPosition, out List<Vector3Int> obstacles);
+        ways[0] = targetPosition;
+        Vector3Int maxHeight = Mathf.Max(targetPosition.y, orderPosition.y) == targetPosition.y ? targetPosition : orderPosition;
+        Vector3 middle = targetPosition - orderPosition;
+        if (obstacles.Count != 0)
         {
-            if (obstacle == targetInt) continue;
-            if (maxHeight.y <= obstacle.y)
-                maxHeight = obstacle;
-        }
-        if (maxHeight != Vector3Int.zero)
-        {
-            ways[1] = orderPos + new Vector3(0, maxHeight.y+1, 0);
-            ways[2] = target + new Vector3(0, maxHeight.y+1, 0);
+            foreach (var obstacle in obstacles)
+            {
+                if (obstacle == targetPosition) continue;
+                if (maxHeight.y <= obstacle.y)
+                    maxHeight = obstacle;
+            }
+            float distance = Vector3Int.Distance(orderPosition, maxHeight);
+            middle = middle.normalized;
+            middle = orderPosition + middle * distance;
+            middle.y = maxHeight.y;
         }
         else
         {
-            ways[1] = orderPos + Vector3.up;
-            ways[2] = target + Vector3.up;
-        }          
-    }
-
-    protected abstract IEnumerator PlayAlongPath(Action action);
-
-
-    #region Property
-    protected ParticleSystem diffusionParitcle
-    {
-        get
-        {
-            if (_diffusionParitcle == null)
-                effect.transform.GetChild(1).TryGetComponent(out _diffusionParitcle);
-            return _diffusionParitcle;
+            middle = orderPosition + targetPosition;
+            middle *= 0.5f;
         }
+        ways[1] = (orderPosition + middle) * 0.5f;
+        ways[2] = (targetPosition + middle) * 0.5f;
+        ways[1].y += maxHeight.y;
+        ways[2].y += maxHeight.y;
     }
-    protected ParticleSystem trailParticle
-    {
-        get
-        {
-            if (_trailParticle == null)
-                effect.transform.GetChild(0).TryGetComponent(out _trailParticle);
-            return _trailParticle;
-        }
-    }
-    #endregion
+
 }

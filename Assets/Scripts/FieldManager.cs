@@ -7,7 +7,8 @@ using Random = UnityEngine.Random;
 
 
 public enum VoxelType {Air,Bed,Ground,Water,Null}
-public enum VoxelState {Null,Obstacle,Character}
+public enum VoxelState {Null,Obstacle,Player,Enemy}
+
 
 public class Voxel
 {
@@ -22,6 +23,7 @@ public class Voxel
 
 public class VoxelData
 {
+    public Character onCharacter;
 
 }
 public enum Direction { Up, Down, Left, Right };
@@ -203,7 +205,10 @@ public class FieldManager : Singleton<FieldManager>
                     continue;
                 int airContactSurfaceCount = 0;
                 CoordCheck.SideCheck2D(waterCoord,
-                    (checkCoord) => Voxel(checkCoord)?.type == VoxelType.Air,
+                    (checkCoord) => 
+                    {
+                        return Voxel(checkCoord)?.type == VoxelType.Air;
+                    },
                     (none) => airContactSurfaceCount++,
                     false) ;
                 if(airContactSurfaceCount>1)

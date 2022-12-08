@@ -5,39 +5,23 @@ using UnityEngine;
 
 public class MonsterMotionPlayer : MotionPlayer
 {
-    protected WaitUntil _animationSetWaiting;
 
-    protected virtual IEnumerator AnimationWaitSet(Action attackAction)
+
+
+
+    public override void Play(Character order, Vector3 target)
     {
-        yield return animationSetWaiting;
-        AnimatorSet(targetAniamtor);
-        attackAction?.Invoke();
+        throw new NotImplementedException();
     }
 
-    public override void AnimatorSet(Animator order)
-    {     
-        targetAniamtor.SetInteger(AnimationHash.animation, 2);
-        targetAniamtor.Update(0);
-        targetAniamtor.SetInteger(AnimationHash.animation, 0);
-    }
-
-    public override YieldInstruction Play(Animator order, Vector3 target, Action attackAction)
+    public override void Set()
     {
-        targetAniamtor = order;
-        return PlayerMotionManager.Instance.StartCoroutine(AnimationWaitSet(attackAction));
+        throw new NotImplementedException();
     }
-
-
-
-    protected WaitUntil animationSetWaiting
+    protected override void Attack()
     {
-        get
-        {
-            if (_animationSetWaiting == null)
-                _animationSetWaiting = new WaitUntil(() => targetAniamtor.CurState(AnimationHash.idle));
-            return _animationSetWaiting;
-        }
+        throw new NotImplementedException();
     }
-
-
 }
+
+

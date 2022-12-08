@@ -2,12 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using System;
 
 public class Character : MonoBehaviour
 {
     protected Animator animator;
     public List<AttackInfo> attackList;
     public List<AttackInfo> attackableList = new List<AttackInfo>(4);
+    private AttackInfo curAttackInfo;
     public int moveablePoint;
     public int jumpableHeight;
     /// <summary>
@@ -27,6 +29,12 @@ public class Character : MonoBehaviour
         attackableList.Clear();
         foreach (AttackInfo attackInfo in attackList)
             attackableList.Add(attackInfo);
+    }
+
+    public virtual void Hit(int damage,Action<Character> additionalHit = null)
+    {
+        Hp -= damage;
+        additionalHit?.Invoke(this);
     }
 
 
@@ -52,7 +60,7 @@ public class Character : MonoBehaviour
 
 
 
-
+    public AttackInfo CurAttackInfo { get { return curAttackInfo; } }
     public Animator Animator
     { 
         get { if (animator == null) transform.TryGetComponent(out animator); return animator; }

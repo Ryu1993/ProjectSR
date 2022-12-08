@@ -4,30 +4,39 @@ using DG.Tweening;
 using System;
 
 
-public class Fireball : CurveMotionPlayer
+public class Fireball : CurveMotionPlayer,IPlayerMotionable
 {
+    public AnimationClip motionClip { get ; set; }
+    private ParticleSystem ballEffect;
+    private ParticleSystem explosionEffect;
+    private TweenCallback complete;
 
-    protected override IEnumerator PlayAlongPath(Action action)
+    public override void Play(Character order, Vector3 target)
     {
-        //yield return animationDelay;
-        //trailParticle.transform.position = trailParticle.transform.forward + Vector3.up;
-        trailParticle.gameObject.SetActive(true);
-        trailParticle.Play();
-        yield return trailParticle.transform.DOPath(ways, 2f, PathType.CubicBezier).SetEase(Ease.InExpo).OnComplete(() =>
-        {
-            trailParticle.gameObject.SetActive(false);
-            diffusionParitcle.Play();
-            action.Invoke();
-        }).WaitForCompletion();
+        base.Play(order, target);
+        WayPointSet(Vector3Int.RoundToInt(order.transform.position), Vector3Int.RoundToInt(target));
+        explosionEffect.transform.position = target;
+        ballEffect.transform.position = order.transform.position + Vector3Int.up;
+        MotionManager.Instance.MotionChange(order.Animator, Motion.Attack);
+        ballEffect.gameObject.SetActive(true);
+        ballEffect.Play();
+        ballEffect.transform.DOPath(ways, 1, PathType.CubicBezier).SetDelay(attackDelay).onComplete+=complete;       
     }
 
-    protected override WaitUntil animationDelay
+    public override void Set()
     {
-        get
-        {
-            if (_animationDelay == null)
-                _animationDelay = new WaitUntil(() => targetAniamtor.CurStateProgress(AnimationHash.attack)>0.5f);
-            return _animationDelay;
-        }
+        effect.transform.GetChild(0).TryGetComponent(out ballEffect);
+        effect.transform.GetChild(1).TryGetComponent(out explosionEffect);
+        complete = Attack;
+    }
+
+    protected override void Attack()
+    {
+        ballEffect.Stop();
+        ballEffect.gameObject.SetActive(false);
+        explosionEffect.gameObject.SetActive(true);
+        explosionEffect.Play();
+        RangeAttack();
+        base.Attack();
     }
 }

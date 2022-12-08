@@ -5,7 +5,18 @@ using UnityEngine;
 
 public class MonsterMotion : MotionPlayer
 {
-    public override YieldInstruction Play(Animator order, Vector3 target, Action attackAction)
+
+    public override void Play(Character order, Vector3 target)
+    {
+        throw new NotImplementedException();
+    }
+
+    public override void Set()
+    {
+        throw new NotImplementedException();
+    }
+
+    protected override void Attack()
     {
         throw new NotImplementedException();
     }

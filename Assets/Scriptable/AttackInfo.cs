@@ -13,13 +13,16 @@ public class AttackInfo : ScriptableObject
     [BoxGroup("SelectInfo")] public int selectRange;
     [BoxGroup("SelectInfo")] public bool selectHeightAllow;
     [BoxGroup("SelectInfo")] public CUBE_TYPE[] selectCubeMask;
+    [BoxGroup("SelectInfo")] public VoxelType[] selectVoxelMask;
     [BoxGroup("SelectInfo")] public FIELD_SHAPE selectShape;
 
     [BoxGroup("AttackInfo")] public int attakcRange;
     [BoxGroup("AttackInfo")] public bool attakcHeightAllow;
     [BoxGroup("AttackInfo")] public CUBE_TYPE[] attackCubeMask;
+    [BoxGroup("AttackInfo")] public VoxelType[] attackVoxelMask;
     [BoxGroup("AttackInfo")] public FIELD_SHAPE attackShape;
     public AssetReferenceT<AnimationClip> attackMotion;
     public AssetReferenceT<GameObject> attackEffect;
+    public float attackDelay;
 
 }

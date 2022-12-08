@@ -41,11 +41,10 @@ public class PlayerMotionManager : Singleton<PlayerMotionManager>
                 if (!dictionary.ContainsKey(info))
                 {
                     MotionPlayer player = Activator.CreateInstance(Type.GetType(info.name)) as MotionPlayer;
-                    player.overrideController = overrideController;
+                    IPlayerMotionable playerMotionable = player as IPlayerMotionable;
                     if (player == null) continue;
                     info.attackMotion.LoadAssetAsync<AnimationClip>().Completed += 
-                        (handle) => { player.motionClip = handle.Result;
-                                      player.motionClipPair = new KeyValuePair<AnimationClip, AnimationClip>(originalAttack, player.motionClip);
+                        (handle) => { playerMotionable.motionClip = handle.Result;
                                       callback?.Invoke(); };
                     info.attackEffect.InstantiateAsync(Vector3.down, Quaternion.identity).Completed += 
                         (handle) => { player.effect = handle.Result;

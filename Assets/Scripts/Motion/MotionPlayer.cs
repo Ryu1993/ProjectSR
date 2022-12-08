@@ -3,58 +3,60 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class MotionPlayer
+public abstract class MotionPlayer : ISetable
 {
     public GameObject effect;
-    public AnimationClip motionClip;
-    public AnimatorOverrideController overrideController;
-    public KeyValuePair<AnimationClip, AnimationClip> motionClipPair;
-    protected WaitWhile _effectDelay;
-    protected WaitUntil _animationDelay;
-    protected ParticleSystem _particleEffect;
-    protected Animator targetAniamtor;
-
-    public abstract YieldInstruction Play(Animator order,Vector3 target,Action attackAction);
-
-    public virtual void AnimatorSet(Animator order)
+    protected Character order;
+    protected Vector3Int targetPostion;
+    protected int attackRange;
+    protected int attackDamage;
+    protected float attackDelay;
+    protected bool orderIsMonster;
+    public abstract void Set();
+    public virtual void Play(Character order, Vector3 target)
     {
-        PlayerMotionManager manager = PlayerMotionManager.Instance;
-        targetAniamtor = order;
-        manager.controllerClips[manager.clipsIndex] = motionClipPair;
-        overrideController.ApplyOverrides(PlayerMotionManager.Instance.controllerClips);
-        order.runtimeAnimatorController = overrideController;
-        order.SetInteger(AnimationHash.animation, 2);
-        order.Update(0);
-        order.SetInteger(AnimationHash.animation, 0);
+        MotionManager.Instance.isMotionCompleted = false;
+        orderIsMonster = order is Monster;
+        targetPostion = Vector3Int.RoundToInt(target);
+        attackRange = order.CurAttackInfo.attakcRange;
+        attackDelay = order.CurAttackInfo.attackDelay;
+        this.order = order;
+    }
+    protected virtual void Attack()
+    {
+        MotionManager.Instance.isMotionCompleted = true;
     }
 
-    #region Property  
-    protected virtual WaitUntil animationDelay
+    protected void RangeAttack()
     {
-        get
+        Voxel checkVoxel = null;
+        VoxelState checkState = orderIsMonster ? VoxelState.Enemy : VoxelState.Player;
+        CoordCheck.CustomSideCheck3D(targetPostion, attackRange,
+            (checkCoord) =>
+            {
+                checkVoxel = FieldManager.Instance.Voxel(checkCoord);
+                return checkVoxel?.state != checkState & checkVoxel?.state != VoxelState.Null;
+            },
+            (checkCoord) =>
+            {
+                checkVoxel?.data.onCharacter.Hit(attackDamage);
+            },
+            true);
+    }
+    protected void PenetrateAttack()
+    {
+        Voxel checkVoxel = null;
+        VoxelState checkState = orderIsMonster ? VoxelState.Enemy : VoxelState.Player;
+        Vector3Int orderCoord = Vector3Int.RoundToInt(order.transform.position);
+        Vector3Int targetCoord = Vector3Int.RoundToInt(targetPostion);
+        CoordCheck.VoxelRayCast(orderCoord, targetCoord, out List<Vector3Int> crashList, order.CurAttackInfo.attackVoxelMask);
+        foreach (Vector3Int crash in crashList)
         {
-            if (_animationDelay == null)
-                _animationDelay = new WaitUntil(()=>targetAniamtor.CurStateProgress(AnimationHash.attack)>0.6f);
-            return _animationDelay;
+            checkVoxel = FieldManager.Instance.Voxel(crash);
+            if (checkVoxel?.state != checkState)
+                checkVoxel.data.onCharacter.Hit(attackDamage);
         }
     }
-    protected virtual WaitWhile effectDelay
-    {
-        get
-        {
-            if (_effectDelay == null)
-                _effectDelay = new WaitWhile(() => particleEffect.isPlaying);
-            return _effectDelay;
-        }
-    }
-    protected virtual ParticleSystem particleEffect
-    {
-        get
-        {
-            if (_particleEffect == null)
-                effect.TryGetComponent(out _particleEffect);
-            return _particleEffect;
-        }
-    }
-    #endregion
+
+  
 }

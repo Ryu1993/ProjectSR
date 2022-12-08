@@ -3,30 +3,43 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using DG.Tweening;
 
 public class SpikeMotion : MotionPlayer
 {
-   
-    public override YieldInstruction Play(Animator order, Vector3 target, Action attackAction)
+
+    protected ParticleSystem spikeEffect;
+    protected float effectDuration;
+    private TweenCallback complete;
+    float progress;
+
+    public override void Play(Character order, Vector3 target)
     {
-        AnimatorSet(order);
-        return PlayerMotionManager.Instance.StartCoroutine(EffectPlay(order.transform.position, target, attackAction));
-    }
-    protected virtual IEnumerator EffectPlay(Vector3 origin, Vector3 target,Action attackAction)
-    {
-        var main = particleEffect.main;
-        main.startLifetime = Vector3.Distance(origin, target) * 0.025f;
-        particleEffect.transform.position = origin;
-        particleEffect.transform.LookAt(target);
-        particleEffect.gameObject.SetActive(true);
-        yield return animationDelay;
-        particleEffect.Play();
-        yield return effectDelay;
-        attackAction?.Invoke();
+        base.Play(order,target);
+        spikeEffect.transform.transform.position = order.transform.position + order.transform.forward;
+        var effectMain = spikeEffect.main;
+        effectMain.startSpeed = Vector3.Distance(order.transform.position, target) * 5f;
+        progress = 0;
+        MotionManager.Instance.MotionChange(order.Animator, Motion.Attack);
+        DOTween.To(() => progress, (x) => progress = x, effectDuration, effectDuration).
+            SetDelay(attackDelay).
+            OnStart(() => spikeEffect.gameObject.SetActive(true)).
+            OnComplete(complete);
     }
 
- 
+    public override void Set()
+    {
+        effect.transform.TryGetComponent(out spikeEffect);
+        effectDuration = spikeEffect.main.duration;
+        complete = Attack;
+    }
 
+    protected override void Attack()
+    {
+        PenetrateAttack();
+        RangeAttack();
+        base.Attack();
+    }
 
 
 }
