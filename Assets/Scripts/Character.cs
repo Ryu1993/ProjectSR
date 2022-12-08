@@ -60,7 +60,7 @@ public class Character : MonoBehaviour
 
 
 
-    public AttackInfo CurAttackInfo { get { return curAttackInfo; } }
+    public AttackInfo CurAttackInfo { get { return curAttackInfo; } set { curAttackInfo = value; } }
     public Animator Animator
     { 
         get { if (animator == null) transform.TryGetComponent(out animator); return animator; }

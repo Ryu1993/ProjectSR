@@ -23,7 +23,7 @@ public class MotionManager : Singleton<MotionManager>
     [HideInInspector] public Dictionary<AttackInfo, MotionPlayer> monsterAttackMotions = new Dictionary<AttackInfo, MotionPlayer>();
     private List<KeyValuePair<AnimationClip, AnimationClip>> playerControllerClips = new List<KeyValuePair<AnimationClip, AnimationClip>>();
     public AnimatorOverrideController playerOverrideController;
-    public bool isMotionCompleted;
+    [HideInInspector] public bool isMotionCompleted;
     private WaitMotion waitMotion = new WaitMotion();
     private readonly int animationHash = Animator.StringToHash("animation");
 
@@ -79,7 +79,10 @@ public class MotionManager : Singleton<MotionManager>
     //    MotionSetByCharacter(GameManager.Instance.enemy, monsterAttackMotions);
     //}
 
-
+    public void TestSet(List<Character> characters)
+    {
+        MotionSetByCharacter(characters, playerAttackMotions);
+    }
 
 
     private void MotionSetByCharacter(List<Character> characters, Dictionary<AttackInfo, MotionPlayer> dictionary, Action callback = null)

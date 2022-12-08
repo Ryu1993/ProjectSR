@@ -17,10 +17,12 @@ MonoBehaviour:
   selectRange: 4
   selectHeightAllow: 1
   selectCubeMask: 
+  selectVoxelMask: 
   selectShape: 2
   attakcRange: 2
   attakcHeightAllow: 1
   attackCubeMask: 
+  attackVoxelMask: 
   attackShape: 2
   attackMotion:
     m_AssetGUID: cf39517cb36b4dd44b943e57f4e420e2
@@ -32,3 +34,4 @@ MonoBehaviour:
     m_SubObjectName: 
     m_SubObjectType: 
     m_EditorAssetChanged: 0
+  attackDelay: 0.2

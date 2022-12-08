@@ -15,7 +15,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &8551860221629688153
 Transform:
   m_ObjectHideFlags: 0
@@ -46,7 +46,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1722081097931586, guid: 483399fb724d5894d8630d0fbe60acb1, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4457159321914820, guid: 483399fb724d5894d8630d0fbe60acb1, type: 3}
       propertyPath: m_RootOrder
@@ -109,6 +109,10 @@ PrefabInstance:
     - target: {fileID: 1809022330002312, guid: acfd977ed73625243ad10d2f74b8b620, type: 3}
       propertyPath: m_Name
       value: FireballExplosion
+      objectReference: {fileID: 0}
+    - target: {fileID: 1809022330002312, guid: acfd977ed73625243ad10d2f74b8b620, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4150649967365504, guid: acfd977ed73625243ad10d2f74b8b620, type: 3}
       propertyPath: m_RootOrder

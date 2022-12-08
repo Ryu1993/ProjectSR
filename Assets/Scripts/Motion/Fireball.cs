@@ -16,8 +16,9 @@ public class Fireball : CurveMotionPlayer,IPlayerMotionable
         base.Play(order, target);
         WayPointSet(Vector3Int.RoundToInt(order.transform.position), Vector3Int.RoundToInt(target));
         explosionEffect.transform.position = target;
-        ballEffect.transform.position = order.transform.position + Vector3Int.up;
+        ballEffect.transform.position = order.transform.position + Vector3.up * 1.5f;
         MotionManager.Instance.MotionChange(order.Animator, Motion.Attack);
+        effect.gameObject.SetActive(true);
         ballEffect.gameObject.SetActive(true);
         ballEffect.Play();
         ballEffect.transform.DOPath(ways, 1, PathType.CubicBezier).SetDelay(attackDelay).onComplete+=complete;       
