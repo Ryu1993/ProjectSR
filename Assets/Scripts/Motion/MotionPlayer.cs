@@ -27,7 +27,7 @@ public abstract class MotionPlayer : ISetable
         MotionManager.Instance.isMotionCompleted = true;
     }
 
-    protected void RangeAttack()
+    protected void RangeAttack(Action<Character> additionalHit = null)
     {
         Voxel checkVoxel = null;
         VoxelState checkState = orderIsMonster ? VoxelState.Enemy : VoxelState.Player;
@@ -39,11 +39,11 @@ public abstract class MotionPlayer : ISetable
             },
             (checkCoord) =>
             {
-                checkVoxel?.data.onCharacter.Hit(attackDamage);
+                checkVoxel?.data.onCharacter.Hit(attackDamage,additionalHit);
             },
             true);
     }
-    protected void PenetrateAttack()
+    protected void PenetrateAttack(Action<Character> additionalHit = null)
     {
         Voxel checkVoxel = null;
         VoxelState checkState = orderIsMonster ? VoxelState.Enemy : VoxelState.Player;
@@ -54,8 +54,16 @@ public abstract class MotionPlayer : ISetable
         {
             checkVoxel = FieldManager.Instance.Voxel(crash);
             if (checkVoxel?.state != checkState)
-                checkVoxel.data.onCharacter.Hit(attackDamage);
+                checkVoxel.data.onCharacter.Hit(attackDamage,additionalHit);
         }
+    }
+
+
+    protected void PointAttack(Action<Character> additionalHit = null)
+    {
+        VoxelState checkState = orderIsMonster ? VoxelState.Enemy : VoxelState.Player;
+        Vector3Int targetCoord = Vector3Int.RoundToInt(targetPostion);
+        FieldManager.Instance.Voxel(targetCoord).data?.onCharacter?.Hit(attackDamage,additionalHit);
     }
 
   
