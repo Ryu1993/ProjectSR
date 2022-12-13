@@ -49,7 +49,11 @@ public class AreaView : MonoBehaviour,IPoolingable
 
     public void SetType(TILE_TYPE type) => SetColor(type,ref curType);
     public void SetState(TILE_TYPE type) => SetColor(type, ref curState);
-    public void Return()=> home.Return(gameObject);
+    public void Return()
+    {
+        meshCollider.enabled = false;
+        home.Return(gameObject);
+    }
 
 
 

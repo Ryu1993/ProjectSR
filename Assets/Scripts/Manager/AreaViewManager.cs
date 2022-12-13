@@ -1,7 +1,6 @@
 
 using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 
@@ -72,8 +71,9 @@ public class AreaViewManager : NonBehaviourSingleton<AreaViewManager>, ISetable
 
     
 
-    public void ReturnAreaViews()
+    public void ReturnAreaViews(Dictionary<Vector2Int,AreaView> areaViewDic = null)
     {
+        areaViewDic ??= this.areaViewDic;
         areaViewDic.LoopDictionary(areaReturn);
         areaViewDic.Clear();
     }
@@ -84,8 +84,10 @@ public class AreaViewManager : NonBehaviourSingleton<AreaViewManager>, ISetable
         return areaViewPool.Call(position).GetComponent<AreaView>();
     }
 
-    public void CallAreaViews()
+    public void CallAreaViews(Dictionary<Vector2Int,Vector3Int> areaCoordDic = null, Dictionary<Vector2Int, AreaView> areaViewDic = null)
     {
+        areaCoordDic ??= this.areaCoordDic;
+        areaViewDic ??= this.areaViewDic;
         ReturnAreaViews();
         areaCoordDic.LoopDictionary((Vector3Int coord) => areaViewDic.Add(new Vector2Int(coord.x, coord.z), CallAreaView(coord)));           
     }
@@ -95,8 +97,11 @@ public class AreaViewManager : NonBehaviourSingleton<AreaViewManager>, ISetable
         if (FieldManager.Instance.surfaceDic.TryGetValue(target2DCoord, out Vector3Int targetCoord))
             areaCoordDic.Add(target2DCoord, targetCoord);
     }
-    public void AreaCoordSet(Vector2Int origin, int range, FIELD_SHAPE shape = FIELD_SHAPE.Square)
+
+
+    public void AreaCoordSet(Vector2Int origin, int range, FIELD_SHAPE shape = FIELD_SHAPE.Square,Dictionary<Vector2Int,Vector3Int> areaCoordDic = null, Func<Vector2Int, bool> condition = null)
     {
+        areaCoordDic ??= this.areaCoordDic;
         areaCoordDic.Clear();
         Func<int, int, bool> accept = (x, y) => true;
         switch (shape)
@@ -124,8 +129,18 @@ public class AreaViewManager : NonBehaviourSingleton<AreaViewManager>, ISetable
                 for (int i = -range; i <= range; i++)
                 {
                     if (i == 0) continue;
-                    AddCoord(origin + new Vector2Int(i, i));
-                    AddCoord(origin + new Vector2Int(i, -i));
+                    if(condition!=null)
+                    {
+                        if(condition(origin + new Vector2Int(i, i)))
+                            AddCoord(origin + new Vector2Int(i, i));
+                        if(condition(origin + new Vector2Int(i, -i)))
+                            AddCoord(origin + new Vector2Int(i, -i));
+                    }
+                    else
+                    {
+                        AddCoord(origin + new Vector2Int(i, i));
+                        AddCoord(origin + new Vector2Int(i, -i));
+                    }    
                 }
                 return;
         }
@@ -133,7 +148,15 @@ public class AreaViewManager : NonBehaviourSingleton<AreaViewManager>, ISetable
             for (int j = -range; j <= range; j++)
             {
                 if (accept(i, j))
-                    AddCoord(origin + new Vector2Int(i, j));
+                {
+                    if (condition != null)
+                    {
+                        if (condition(origin + new Vector2Int(i, j)))
+                            AddCoord(origin + new Vector2Int(i, j));
+                    }
+                    else
+                        AddCoord(origin + new Vector2Int(i, j));
+                }
             }
     }
 

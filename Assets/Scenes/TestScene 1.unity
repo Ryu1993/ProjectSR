@@ -739,6 +739,7 @@ GameObject:
   - component: {fileID: 1121299587}
   - component: {fileID: 1121299586}
   - component: {fileID: 1121299588}
+  - component: {fileID: 1121299589}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -808,6 +809,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerOverrideController: {fileID: 22100000, guid: 7a6d1f1d8655f264696e42eda939ce21, type: 2}
   isMotionCompleted: 0
+--- !u!114 &1121299589
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1121299584}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f24b490ba4d1a314b9453755576684d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1276791031
 GameObject:
   m_ObjectHideFlags: 0
