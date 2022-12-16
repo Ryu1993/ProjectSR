@@ -19,6 +19,21 @@ public class AttackManager : MonoBehaviour
     private Func<Vector2Int, bool> attackCondition;
     private Vector2Int curSelectedPosition;
 
+
+    Action testAction;
+    public Character testorder;
+
+    public void Update()
+    {
+        testAction?.Invoke();
+    }
+
+    public void TestSet()
+    {
+        if(Input.GetKeyDown(KeyCode.T))
+            AttackInfoSet(testorder);
+    }
+
     public void AttackInfoSet(Character order)
     {
         this.order = order;
@@ -47,12 +62,17 @@ public class AttackManager : MonoBehaviour
             };
         }
         AreaViewManager.Instance.AreaCoordSet(orderTransform.position.To2DInt(), curAttackInfo.selectRange, curAttackInfo.selectShape,null,selectCondition);
+
+        
     }
 
     private void AttackSelectViewCall()
     {
         AreaViewManager.Instance.CallAreaViews();
         AreaViewManager.Instance.AreaViewDic.LoopDictionary((view) => view.SetType(TILE_TYPE.Enable));
+        testAction = null;
+        testAction += AttackViewCall;
+        testAction += Attack;
     }
 
 
@@ -74,6 +94,8 @@ public class AttackManager : MonoBehaviour
     {
         if(Input.GetMouseButtonDown(0))
         {
+            AreaViewManager.Instance.ReturnAreaViews(attackViewArea);
+            AreaViewManager.Instance.ReturnAreaViews();           
             FieldManager.Instance.surfaceDic.TryGetValue(curSelectedPosition, out Vector3Int target);
 
             MotionManager.Instance.Attack(order, target);
